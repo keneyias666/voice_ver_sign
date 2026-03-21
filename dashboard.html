@@ -136,6 +136,7 @@
                     </div>
                     <h2 class="welcome-heading">How can I help you today?</h2>
                     <p class="welcome-sub">Start a translation or choose an action below</p>
+                    <img src="images/transparent-logo.png" alt="Voice2Sign" class="welcome-illustration">
                     <div class="suggestion-grid">
                         <button class="suggestion-card" onclick="handleInput('mic')">
                             <svg class="suggestion-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
@@ -178,6 +179,32 @@
                     <label class="pref-row"><span>Compact chat layout</span><input type="checkbox" id="prefCompactChat" class="toggle-check"></label>
                     <label class="pref-row"><span>Smooth message animations</span><input type="checkbox" id="prefSmoothMotion" class="toggle-check" checked></label>
                     <label class="pref-row"><span>Sound notifications</span><input type="checkbox" id="prefSound" class="toggle-check"></label>
+                    <label class="pref-row"><span>High contrast mode</span><input type="checkbox" id="prefHighContrast" class="toggle-check"></label>
+                    <label class="pref-row"><span>Reduced motion</span><input type="checkbox" id="prefReducedMotion" class="toggle-check"></label>
+                    <label class="pref-row"><span>Auto-save chat drafts</span><input type="checkbox" id="prefAutosaveDrafts" class="toggle-check"></label>
+                    <label class="pref-row"><span>Show timestamps in chat</span><input type="checkbox" id="prefShowTimestamps" class="toggle-check"></label>
+                    <label class="pref-row vertical"><span>Default translation language</span>
+                        <select id="prefLanguage" class="pref-input">
+                            <option value="English">English</option>
+                            <option value="Filipino">Filipino</option>
+                            <option value="Spanish">Spanish</option>
+                        </select>
+                    </label>
+                    <label class="pref-row vertical"><span>Assistant response style</span>
+                        <select id="prefResponseStyle" class="pref-input">
+                            <option value="concise">Concise</option>
+                            <option value="balanced">Balanced</option>
+                            <option value="detailed">Detailed</option>
+                        </select>
+                    </label>
+                    <label class="pref-row vertical"><span>Camera quality preset</span>
+                        <select id="prefCameraQuality" class="pref-input">
+                            <option value="balanced">Balanced</option>
+                            <option value="performance">Performance</option>
+                            <option value="quality">High quality</option>
+                        </select>
+                    </label>
+                    <button class="action-btn" onclick="savePreferencesSettings()">Save Preferences</button>
                 </div>
             </div>
 
@@ -189,7 +216,10 @@
                 </div>
                 <div class="pref-card">
                     <label class="pref-row vertical"><span>Backend API URL</span><input type="text" id="apiBaseInput" value="http://127.0.0.1:8000" class="pref-input"></label>
+                    <label class="pref-row vertical"><span>Realtime WebSocket URL</span><input type="text" id="wsBaseInput" value="ws://127.0.0.1:8000/ws" class="pref-input"></label>
+                    <label class="pref-row vertical"><span>Default request timeout (seconds)</span><input type="number" min="5" max="120" id="requestTimeoutInput" value="30" class="pref-input"></label>
                     <button class="action-btn" onclick="saveSettings()">Save Settings</button>
+                    <a href="settings.html" class="action-btn" style="text-align:center;text-decoration:none;">Open full settings page</a>
                 </div>
             </div>
 
@@ -235,6 +265,7 @@
     </div>
 
     <script src="js/main.js"></script>
+    <script src="js/api.js"></script>
     <script src="js/dashboard.js"></script>
 </body>
 </html>

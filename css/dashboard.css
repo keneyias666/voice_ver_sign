@@ -782,6 +782,21 @@
     max-width: 340px;
 }
 
+.welcome-illustration {
+    width: 90px;
+    height: 90px;
+    object-fit: contain;
+    margin-bottom: 20px;
+    opacity: 0.92;
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.12));
+    animation: floatLogo 4.8s ease-in-out infinite alternate;
+}
+
+@keyframes floatLogo {
+    from { transform: translateY(0); }
+    to { transform: translateY(8px); }
+}
+
 .suggestion-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1001,12 +1016,18 @@
 }
 
 .section-panel.is-visible {
-    display: block;
+    display: flex;
+    flex-direction: column;
     animation: fadeUp 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .panel-header {
     margin-bottom: 24px;
+    max-width: 760px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
 }
 
 .panel-title {
@@ -1029,7 +1050,9 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
-    max-width: 580px;
+    max-width: 760px;
+    width: 100%;
+    margin: 0 auto;
 }
 
 .pref-row {
@@ -1246,6 +1269,20 @@
 /* ── Hidden state for section switching ── */
 .section-hidden {
     display: none !important;
+}
+
+body.high-contrast {
+    --accent: #a96c2f;
+    --border: #8a8a8a;
+    --text-secondary: #444;
+}
+
+body.reduced-motion *,
+body.reduced-motion *:hover,
+body.reduced-motion *:focus,
+body.reduced-motion *:active {
+    animation: none !important;
+    transition: none !important;
 }
 
 /* ==========================================================================

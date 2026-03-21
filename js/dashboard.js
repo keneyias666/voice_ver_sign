@@ -10,6 +10,66 @@ let cameraActive = false;
 let API_BASE_URL = localStorage.getItem("apiBaseUrl") || "http://127.0.0.1:8000";
 let micStream = null;
 let cameraStream = null;
+const PREFERENCES_KEY = "dashboardPreferences";
+
+function getDefaultPreferences() {
+    return {
+        autoplay: false,
+        cameraDefault: false,
+        compactChat: false,
+        smoothMotion: true,
+        sound: false,
+        highContrast: false,
+        reducedMotion: false,
+        autosaveDrafts: true,
+        showTimestamps: true,
+        language: "English",
+        responseStyle: "balanced",
+        cameraQuality: "balanced"
+    };
+}
+
+function applyPreferenceVisuals(preferences) {
+    document.body.classList.toggle("high-contrast", !!preferences.highContrast);
+    document.body.classList.toggle("reduced-motion", !!preferences.reducedMotion);
+    const chatBody = document.getElementById("chatBody");
+    if (chatBody) {
+        chatBody.style.maxWidth = preferences.compactChat ? "880px" : "";
+        chatBody.style.margin = preferences.compactChat ? "0 auto" : "";
+    }
+}
+
+function readPreferencesFromForm() {
+    return {
+        autoplay: !!document.getElementById("prefAutoplay")?.checked,
+        cameraDefault: !!document.getElementById("prefCameraDefault")?.checked,
+        compactChat: !!document.getElementById("prefCompactChat")?.checked,
+        smoothMotion: !!document.getElementById("prefSmoothMotion")?.checked,
+        sound: !!document.getElementById("prefSound")?.checked,
+        highContrast: !!document.getElementById("prefHighContrast")?.checked,
+        reducedMotion: !!document.getElementById("prefReducedMotion")?.checked,
+        autosaveDrafts: !!document.getElementById("prefAutosaveDrafts")?.checked,
+        showTimestamps: !!document.getElementById("prefShowTimestamps")?.checked,
+        language: document.getElementById("prefLanguage")?.value || "English",
+        responseStyle: document.getElementById("prefResponseStyle")?.value || "balanced",
+        cameraQuality: document.getElementById("prefCameraQuality")?.value || "balanced"
+    };
+}
+
+function renderPreferencesToForm(preferences) {
+    if (document.getElementById("prefAutoplay")) document.getElementById("prefAutoplay").checked = !!preferences.autoplay;
+    if (document.getElementById("prefCameraDefault")) document.getElementById("prefCameraDefault").checked = !!preferences.cameraDefault;
+    if (document.getElementById("prefCompactChat")) document.getElementById("prefCompactChat").checked = !!preferences.compactChat;
+    if (document.getElementById("prefSmoothMotion")) document.getElementById("prefSmoothMotion").checked = !!preferences.smoothMotion;
+    if (document.getElementById("prefSound")) document.getElementById("prefSound").checked = !!preferences.sound;
+    if (document.getElementById("prefHighContrast")) document.getElementById("prefHighContrast").checked = !!preferences.highContrast;
+    if (document.getElementById("prefReducedMotion")) document.getElementById("prefReducedMotion").checked = !!preferences.reducedMotion;
+    if (document.getElementById("prefAutosaveDrafts")) document.getElementById("prefAutosaveDrafts").checked = !!preferences.autosaveDrafts;
+    if (document.getElementById("prefShowTimestamps")) document.getElementById("prefShowTimestamps").checked = !!preferences.showTimestamps;
+    if (document.getElementById("prefLanguage")) document.getElementById("prefLanguage").value = preferences.language || "English";
+    if (document.getElementById("prefResponseStyle")) document.getElementById("prefResponseStyle").value = preferences.responseStyle || "balanced";
+    if (document.getElementById("prefCameraQuality")) document.getElementById("prefCameraQuality").value = preferences.cameraQuality || "balanced";
+}
 
 function syncCameraPanelUi(isActive) {
     const panel = document.getElementById("cameraPanel");
@@ -84,10 +144,29 @@ function updateProfileDisplay() {
 /* ── Settings / Profile save ── */
 function saveSettings() {
     const value = document.getElementById("apiBaseInput")?.value?.trim();
+    const wsBaseUrl = document.getElementById("wsBaseInput")?.value?.trim();
+    const requestTimeout = document.getElementById("requestTimeoutInput")?.value;
     if (!value) return;
     API_BASE_URL = value;
     localStorage.setItem("apiBaseUrl", value);
+    if (wsBaseUrl) localStorage.setItem("wsBaseUrl", wsBaseUrl);
+    if (requestTimeout) localStorage.setItem("requestTimeout", String(requestTimeout));
+    if (typeof ApiClient !== "undefined") ApiClient.setBaseUrl(value);
     Toast.show("Settings saved.");
+}
+
+async function savePreferencesSettings() {
+    const preferences = readPreferencesFromForm();
+    localStorage.setItem(PREFERENCES_KEY, JSON.stringify(preferences));
+    applyPreferenceVisuals(preferences);
+    if (typeof ApiClient !== "undefined") {
+        try {
+            await ApiClient.savePreferences(preferences);
+        } catch (error) {
+            console.warn("Backend preferences sync unavailable.", error);
+        }
+    }
+    Toast.show("Preferences saved.");
 }
 
 function saveProfileSettings() {
@@ -298,12 +377,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const apiBaseInput = document.getElementById("apiBaseInput");
     if (apiBaseInput) apiBaseInput.value = API_BASE_URL;
+    const wsBaseInput = document.getElementById("wsBaseInput");
+    if (wsBaseInput) wsBaseInput.value = localStorage.getItem("wsBaseUrl") || "ws://127.0.0.1:8000/ws";
+    const requestTimeoutInput = document.getElementById("requestTimeoutInput");
+    if (requestTimeoutInput) requestTimeoutInput.value = localStorage.getItem("requestTimeout") || "30";
 
     const shell = document.querySelector(".dashboard-shell");
     const sidebar = document.getElementById("sidebar");
     if (shell) shell.classList.toggle("sidebar-collapsed", sidebarCollapsed);
     if (sidebar) sidebar.classList.toggle("sidebar-collapsed", sidebarCollapsed);
     syncCameraPanelUi(false);
+    const defaultPrefs = getDefaultPreferences();
+    let preferences = { ...defaultPrefs };
+    const savedPreferences = localStorage.getItem(PREFERENCES_KEY);
+    if (savedPreferences) {
+        try {
+            preferences = { ...defaultPrefs, ...JSON.parse(savedPreferences) };
+        } catch (error) {
+            preferences = { ...defaultPrefs };
+        }
+    }
+    renderPreferencesToForm(preferences);
+    applyPreferenceVisuals(preferences);
+    if (preferences.cameraDefault) {
+        handleInput("camera");
+    }
 
     updateProfileDisplay();
 

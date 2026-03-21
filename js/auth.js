@@ -62,7 +62,17 @@ function simulateAuth(message, redirectTo) {
     }, 700);
 }
 
-function handleLogin(event) {
+async function tryBackendAuth(handler) {
+    if (typeof ApiClient === "undefined") return null;
+    try {
+        return await handler();
+    } catch (error) {
+        console.warn("Backend auth unavailable, using local fallback.", error);
+        return null;
+    }
+}
+
+async function handleLogin(event) {
     event.preventDefault();
     const email = document.getElementById("email")?.value?.trim();
     const password = document.getElementById("password")?.value;
@@ -71,10 +81,14 @@ function handleLogin(event) {
         Toast.show("Please enter email and password.");
         return;
     }
+    const result = await tryBackendAuth(() => ApiClient.login(email, password));
+    if (result?.token) {
+        localStorage.setItem("authToken", result.token);
+    }
     simulateAuth("Signed in successfully.", "dashboard.html");
 }
 
-function handleSignup(event) {
+async function handleSignup(event) {
     event.preventDefault();
 
     const firstName = document.getElementById("firstName")?.value?.trim();
@@ -101,8 +115,32 @@ function handleSignup(event) {
         return;
     }
 
+    const payload = {
+        firstName,
+        lastName,
+        email,
+        password,
+        userType: selectedUserType
+    };
+    await tryBackendAuth(() => ApiClient.signup(payload));
     localStorage.setItem("userType", selectedUserType);
     simulateAuth("Account created successfully.", "dashboard.html");
+}
+
+async function handleForgotPassword(event) {
+    event.preventDefault();
+    const email = document.getElementById("email")?.value?.trim();
+    if (!email) {
+        Toast.show("Please enter your email.");
+        return;
+    }
+    const submitBtn = document.querySelector("button[type='submit']");
+    if (submitBtn) submitBtn.classList.add("btn-loading");
+    await tryBackendAuth(() => ApiClient.forgotPassword(email));
+    setTimeout(() => {
+        if (submitBtn) submitBtn.classList.remove("btn-loading");
+        Toast.show("Reset link sent. Check your inbox.");
+    }, 500);
 }
 
 function loginWithGoogle() {
