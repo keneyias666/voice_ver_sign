@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice2Sign - Create Account</title>
+    <link rel="icon" type="image/png" href="images/transparent-logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/signup.css">
+</head>
+<body>
+    <header class="header">
+        <a href="dashboard.html" class="logo">
+            <img src="images/transparent-logo.png" alt="Voice2Sign" onerror="this.style.display='none'">
+        </a>
+        <div class="header-actions">
+            <button class="icon-btn" onclick="toggleTheme()" id="themeToggle" aria-label="Toggle theme">
+                <svg id="themeIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="signup-wrap">
+            <section class="signup-card card">
+                <div class="signup-head">
+                    <h1 class="signup-title">Create your account</h1>
+                    <p class="signup-subtitle">Join Voice2Sign and start translating instantly.</p>
+                </div>
+
+                <form id="signupForm" onsubmit="handleSignup(event)">
+                    <div class="name-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="firstName">First Name</label>
+                            <input class="form-input" id="firstName" type="text" placeholder="Jane" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="lastName">Last Name</label>
+                            <input class="form-input" id="lastName" type="text" placeholder="Doe" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email</label>
+                        <input class="form-input" id="email" type="email" placeholder="you@example.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="password">Password</label>
+                        <div class="input-wrapper">
+                            <input class="form-input" id="password" type="password" placeholder="Create a password" required>
+                            <svg id="passwordEye" class="input-icon" onclick="togglePassword('password', 'passwordEye')" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                        </div>
+                        <div class="password-strength" aria-live="polite">
+                            <div class="strength-bar"><div id="strengthFill" class="strength-fill"></div></div>
+                            <div id="strengthText" class="strength-text">Use 8+ chars with mixed types</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="confirmPassword">Confirm Password</label>
+                        <div class="input-wrapper">
+                            <input class="form-input" id="confirmPassword" type="password" placeholder="Confirm your password" required>
+                            <svg id="confirmEye" class="input-icon" onclick="togglePassword('confirmPassword', 'confirmEye')" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">I primarily use Voice2Sign as:</label>
+                        <div class="user-type-grid">
+                            <button type="button" class="user-type-btn active" data-type="hearing" onclick="selectUserType('hearing')">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                                </svg>
+                                <span>Hearing User</span>
+                            </button>
+                            <button type="button" class="user-type-btn" data-type="deaf" onclick="selectUserType('deaf')">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                </svg>
+                                <span>Deaf User</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="terms" class="checkbox" required>
+                        <label for="terms" class="checkbox-label">I agree to the terms and privacy policy</label>
+                    </div>
+
+                    <div class="signup-actions">
+                        <button type="submit" class="btn-primary">Create Account</button>
+                    </div>
+                </form>
+
+                <p class="switch-text">Already have an account? <a class="link" href="login.html">Sign in</a></p>
+            </section>
+        </div>
+    </main>
+
+    <script src="js/main.js"></script>
+    <script src="js/auth.js"></script>
+</body>
+</html>
