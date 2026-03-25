@@ -1,0 +1,3 @@
+# Optional: computer vision (server-side), e.g. frame processing alongside the web app.
+# Install: pip install -r requirements-vision.txt
+opencv-python-headless==4.10.0.84

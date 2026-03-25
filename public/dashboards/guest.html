@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice2Sign — Guest Dashboard</title>
+    <meta name="description" content="Voice2Sign — Welcome. Try the demo flows without an account.">
+    <link rel="icon" type="image/png" href="../images/transparent-logo.svg">
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/dashboard-hearing.css">
+</head>
+
+<body>
+    <div class="dashboard" id="dashboardRoot" data-user-role="guest">
+
+        <!-- ── Sidebar ── -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="hearing.html" class="sidebar-logo" title="Home — hearing dashboard"
+                    onclick="event.preventDefault(); showSection('voiceSign'); window.scrollTo(0,0); return false;">
+                    <img src="../images/transparent-logo.svg" alt="Voice2Sign" onerror="this.style.display='none'">
+                    <span class="sidebar-logo-text">Voice2Sign</span>
+                </a>
+                <button type="button" class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h7" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="sidebar-actions">
+                <button type="button" class="new-chat-btn" onclick="createNewChat()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    New chat
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="sidebar-nav-label">Translation flows</div>
+                <div class="sidebar-nav-buttons" id="sidebarNavButtons">
+                    <button type="button" class="sidebar-nav-item active" onclick="showSection('voiceSign')"
+                        data-section="voiceSign" title="Mic → speech-to-text → sign image">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                        </svg>
+                        Voice → Sign
+                    </button>
+                    <button type="button" class="sidebar-nav-item" id="navSignVoice" onclick="showSection('signVoice')"
+                        data-section="signVoice" title="Webcam → recognition → text → speech">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Sign → Voice
+                    </button>
+                    <button type="button" class="sidebar-nav-item" onclick="showSection('chat')" data-section="chat">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 4v-4z" />
+                        </svg>
+                        Text chat
+                    </button>
+                </div>
+            </nav>
+
+            <div class="sidebar-section-label">Your chats</div>
+            <div class="chat-list" id="chatList">
+                <!-- Populated by JS -->
+            </div>
+
+            <div class="sidebar-footer">
+                <button type="button" class="sidebar-footer-btn theme-toggle-control" id="themeToggleBtn"
+                    onclick="toggleTheme(event)" aria-label="Toggle dark or light theme">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path data-theme-icon stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                    Toggle theme
+                </button>
+            </div>
+        </aside>
+
+        <!-- ── Main Panel ── -->
+        <section class="main-panel">
+
+            <!-- Main header (chat + pipeline flows; hidden on preferences/settings) -->
+            <header class="chat-header" id="mainHeader">
+                <div class="chat-header-left">
+                    <button type="button" class="chat-header-toggle" onclick="toggleSidebar()"
+                        aria-label="Open sidebar">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h7" />
+                        </svg>
+                    </button>
+                    <h1 class="chat-header-title" id="dashboardTitle">Voice → Sign</h1>
+                </div>
+                <div class="chat-header-right">
+                    <div class="mic-indicator" id="micIndicator" title="Microphone status">
+                        <div class="mic-level-meter" id="micLevelMeter" aria-hidden="true">
+                            <span class="mic-level-bar"></span><span class="mic-level-bar"></span><span
+                                class="mic-level-bar"></span><span class="mic-level-bar"></span><span
+                                class="mic-level-bar"></span>
+                        </div>
+                        <svg fill="currentColor" viewBox="0 0 24 24" class="mic-indicator-icon">
+                            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" />
+                        </svg>
+                        <span class="mic-indicator-label">Mic</span>
+                    </div>
+                    <div class="header-auth-links" id="authLinks">
+                        <a href="../login.html" class="header-link-btn">Log in</a>
+                        <a href="../signup.html" class="header-link-btn primary">Sign up</a>
+                    </div>
+                </div>
+            </header>
+
+            <p class="role-banner" id="roleBanner" role="status" aria-live="polite"></p>
+
+            <!-- Sign → Voice pipeline (conceptual diagram: webcam → image recognition → text → TTS → sound) -->
+            <div class="section-panel pipeline-section" id="signVoicePanel">
+                <div class="pipeline-inner">
+                    <p class="pipeline-intro">Hand signs in front of the webcam are recognized as text, then spoken
+                        aloud.</p>
+                    <div class="pipeline-flow" aria-label="Sign to voice pipeline">
+                        <div class="pipeline-step"><span class="pipeline-step-num">1</span><span
+                                class="pipeline-step-label">Webcam</span></div>
+                        <span class="pipeline-arrow" aria-hidden="true">→</span>
+                        <div class="pipeline-step"><span class="pipeline-step-num">2</span><span
+                                class="pipeline-step-label">Image recognition <small>(OpenCV)</small></span></div>
+                        <span class="pipeline-arrow" aria-hidden="true">→</span>
+                        <div class="pipeline-step"><span class="pipeline-step-num">3</span><span
+                                class="pipeline-step-label">Text</span></div>
+                        <span class="pipeline-arrow" aria-hidden="true">→</span>
+                        <div class="pipeline-step"><span class="pipeline-step-num">4</span><span
+                                class="pipeline-step-label">Text-to-voice <small>(pyttsx3 / Coqui)</small></span></div>
+                        <span class="pipeline-arrow" aria-hidden="true">→</span>
+                        <div class="pipeline-step pipeline-step--out"><span class="pipeline-step-num">5</span><span
+                                class="pipeline-step-label">Sound</span></div>
+                    </div>
+                    <p class="pipeline-limitation"><strong>Limitation:</strong> English hand signs only <span
+                            class="pipeline-hint">— wire Tesseract / Cloud Vision in the API when ready.</span></p>
+
+                    <div class="pipeline-grid">
+                        <div class="pipeline-media-card">
+                            <div class="pipeline-media-head">
+                                <span class="camera-dot" id="svCameraDot"></span>
+                                <span>Live camera</span>
+                                <button type="button" class="pipeline-btn-secondary"
+                                    onclick="pipelineToggleCamera()">Toggle camera</button>
+                            </div>
+                            <video id="signVoiceVideo" class="pipeline-video" playsinline muted autoplay></video>
+                            <canvas id="signVoiceCanvas" class="pipeline-canvas-hidden" width="640" height="480"
+                                hidden></canvas>
+                            <div class="pipeline-actions">
+                                <button type="button" class="pipeline-btn-primary"
+                                    onclick="pipelineSignVoiceRecognize()">Capture &amp; recognize</button>
+                                <button type="button" class="pipeline-btn-primary" onclick="pipelineSignVoiceSpeak()"
+                                    id="btnSignSpeak">Speak text (TTS)</button>
+                            </div>
+                        </div>
+                        <div class="pipeline-text-card">
+                            <label class="pipeline-label" for="signVoiceText">Recognized text</label>
+                            <textarea id="signVoiceText" class="pipeline-textarea" rows="6"
+                                placeholder="Recognized text appears here — connect OpenCV + OCR on the server."></textarea>
+                            <p class="pipeline-api-note" id="signVoiceApiNote">API:
+                                <code>POST /api/pipeline/sign-to-voice/recognize</code> · <code>…/speak</code></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Voice → Sign pipeline (mic → ASR → text → image → sign visual) -->
+            <div class="section-panel pipeline-section visible" id="voiceSignPanel">
+                <div class="pipeline-inner">
+                    <p class="pipeline-intro">Spoken words are transcribed to text, then rendered as sign imagery.</p>
+                    <div class="pipeline-flow pipeline-flow--wrap" aria-label="Voice to sign pipeline">
+                        <div class="pipeline-step"><span class="pipeline-step-num">1</span><span
+                                class="pipeline-step-label">Voice</span></div>
+                        <span class="pipeline-arrow" aria-hidden="true">→</span>
+                        <div class="pipeline-step"><span class="pipeline-step-num">2</span><span
+                                class="pipeline-step-label">Voice → text <small>(Whisper / SR)</small></span></div>
+                        <span class="pipeline-arrow" aria-hidden="true">→</span>
+                        <div class="pipeline-step"><span class="pipeline-step-num">3</span><span
+                                class="pipeline-step-label">Text</span></div>
+                        <span class="pipeline-arrow" aria-hidden="true">→</span>
+                        <div class="pipeline-step"><span class="pipeline-step-num">4</span><span
+                                class="pipeline-step-label">Text → image <small>(Stable Diffusion / API)</small></span>
+                        </div>
+                        <span class="pipeline-arrow" aria-hidden="true">→</span>
+                        <div class="pipeline-step pipeline-step--out"><span class="pipeline-step-num">5</span><span
+                                class="pipeline-step-label">Sign image</span></div>
+                    </div>
+
+                    <div class="pipeline-grid pipeline-grid--vs">
+                        <div class="pipeline-media-card">
+                            <div class="pipeline-media-head">
+                                <span class="mic-dot" id="vsMicDot"></span>
+                                <span>Microphone</span>
+                                <button type="button" class="pipeline-btn-secondary"
+                                    onclick="pipelineToggleMic()">Toggle mic</button>
+                            </div>
+                            <div class="pipeline-mic-placeholder" id="vsMicVisual">
+                                <div class="mic-level-meter mic-level-meter--large" id="vsMicLevelMeter"
+                                    aria-hidden="true">
+                                    <span class="mic-level-bar"></span><span class="mic-level-bar"></span><span
+                                        class="mic-level-bar"></span><span class="mic-level-bar"></span><span
+                                        class="mic-level-bar"></span><span class="mic-level-bar"></span><span
+                                        class="mic-level-bar"></span>
+                                </div>
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                        d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                                </svg>
+                                <span>Audio capture for Whisper / SpeechRecognition — levels animate when sound is
+                                    detected.</span>
+                            </div>
+                            <div class="pipeline-actions">
+                                <button type="button" class="pipeline-btn-primary"
+                                    onclick="pipelineVoiceSignTranscribe()">Transcribe (stub)</button>
+                                <button type="button" class="pipeline-btn-primary"
+                                    onclick="pipelineVoiceSignRender()">Render sign image (stub)</button>
+                            </div>
+                        </div>
+                        <div class="pipeline-text-card">
+                            <label class="pipeline-label" for="voiceSignTranscript">Transcript</label>
+                            <textarea id="voiceSignTranscript" class="pipeline-textarea" rows="4"
+                                placeholder="Transcript from Whisper / speech recognition…"></textarea>
+                            <label class="pipeline-label" for="voiceSignImageWrap">Sign visualization</label>
+                            <div class="pipeline-image-box" id="voiceSignImageWrap">
+                                <img id="voiceSignImage" class="pipeline-sign-img"
+                                    alt="Sign language visualization placeholder" src="" style="display:none;">
+                                <p class="pipeline-image-placeholder" id="voiceSignImagePh">Image from Stable Diffusion
+                                    / web API will appear here.</p>
+                            </div>
+                            <p class="pipeline-api-note">API: <code>POST /api/pipeline/voice-to-sign/transcribe</code> ·
+                                <code>…/render</code></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Body -->
+            <div class="chat-body section-chat section-hidden" id="chatBody">
+                <div class="welcome-screen" id="welcomeCard">
+                    <div class="welcome-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                        </svg>
+                    </div>
+                    <h2 class="welcome-heading">How can I help you today?</h2>
+                    <p class="welcome-sub">Start a translation or choose an action below</p>
+                    <div class="suggestion-grid">
+                        <button class="suggestion-card" onclick="handleInput('mic')">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                                    d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                            </svg>
+                            <span>Start microphone</span>
+                        </button>
+                        <button class="suggestion-card" onclick="handleInput('camera')">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            <span>Open live camera</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Camera Panel -->
+                <div class="camera-panel" id="cameraPanel">
+                    <div class="camera-panel-header">
+                        <div class="camera-panel-left">
+                            <div class="camera-dot" id="cameraDot"></div>
+                            <span class="camera-panel-label">Live Camera</span>
+                        </div>
+                        <div class="camera-panel-right">
+                            <span class="camera-state" id="cameraStateText" data-off="">Off</span>
+                            <button class="camera-close-btn" onclick="handleInput('camera')" aria-label="Close camera">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <video id="cameraPreview" autoplay playsinline muted></video>
+                </div>
+            </div>
+
+
+
+            <!-- Composer (text chat only) -->
+            <footer class="composer section-chat section-hidden" id="mainComposer">
+                <div class="composer-box">
+                    <div class="composer-left">
+                        <button class="composer-icon-btn" id="attachBtn" onclick="handleAttachClick()"
+                            aria-label="Attach File" title="Upload file / picture">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                            </svg>
+                        </button>
+                        <button class="composer-icon-btn" id="micBtn" onclick="handleInput('mic')"
+                            aria-label="Microphone" title="Toggle microphone">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                            </svg>
+                        </button>
+                        <button class="composer-icon-btn" id="cameraBtn" onclick="handleInput('camera')"
+                            aria-label="Camera" title="Toggle camera">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <input id="composerInput" class="composer-input" type="text" placeholder="Message Voice2Sign...">
+                    <button class="send-btn" onclick="sendMessage()" aria-label="Send message">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                    </button>
+                </div>
+                <p class="composer-hint">Voice2Sign can make mistakes. Verify important translations.</p>
+            </footer>
+
+        </section>
+    </div>
+
+    <script src="../js/app.js"></script>
+    <script src="../js/api.js"></script>
+    <script src="../js/dashboard-guest.js"></script>
+    <script src="../js/dashboard-shared.js"></script>
+
+    <!-- Modals -->
+    <div id="proModal" class="modal-overlay hidden" onclick="if(event.target===this) closeModals()">
+        <div class="modal-content" style="max-width: 800px;">
+            <button class="modal-close-btn" onclick="closeModals()" aria-label="Close">&times;</button>
+            <h2 style="display: flex; align-items: center; gap: 8px;">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round" viewBox="0 0 24 24">
+                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                    <polyline points="17 6 23 6 23 12"></polyline>
+                </svg>
+                Upgrade Your Experience
+            </h2>
+            <p>Choose the tier that best fits your translation needs.</p>
+            <div class="pricing-tiers">
+                <div class="tier">
+                    <h3>Free</h3>
+                    <p class="price">$0 <small>/ mo</small></p>
+                    <ul>
+                        <li>Basic translations</li>
+                        <li>Standard text chat</li>
+                    </ul>
+                </div>
+                <div class="tier pro">
+                    <h3>Pro</h3>
+                    <p class="price">$9.99 <small>/ mo</small></p>
+                    <ul>
+                        <li>File & Image uploads</li>
+                    </ul>
+                    <button class="btn-primary mt-1rem" onclick="handleSubscribe('Pro')">Upgrade</button>
+                </div>
+                <div class="tier">
+                    <h3>Ultra</h3>
+                    <p class="price">$19.99 <small>/ mo</small></p>
+                    <ul>
+                        <li>Priority Support</li>
+                        <li>Unlimited File Uploads</li>
+                        <li>Advanced AI Relay</li>
+                    </ul>
+                    <button class="btn-primary mt-1rem" onclick="handleSubscribe('Ultra')">Upgrade</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="paymentModal" class="modal-overlay hidden" onclick="if(event.target===this) closeModals()">
+        <div class="modal-content" style="max-width: 400px; text-align: left;">
+            <button class="modal-close-btn" onclick="closeModals()" aria-label="Close">&times;</button>
+            <h2 style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round" viewBox="0 0 24 24">
+                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                    <line x1="1" y1="10" x2="23" y2="10"></line>
+                </svg>
+                Payment Details
+            </h2>
+            <p style="text-align: center; margin-bottom: 20px;">Complete your subscription for <strong
+                    id="payTierName">Pro</strong></p>
+            <div class="form-group">
+                <label class="form-label">Card Number</label>
+                <input class="form-input" type="text" placeholder="0000 0000 0000 0000">
+            </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <div class="form-group" style="flex: 1;">
+                    <label class="form-label">Expiry Date</label>
+                    <input class="form-input" type="text" placeholder="MM/YY">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label class="form-label">CVC</label>
+                    <input class="form-input" type="text" placeholder="123">
+                </div>
+            </div>
+            <button class="btn-primary" style="width: 100%;"
+                onclick="Toast.success('Payment processing logic stub.')">Confirm Payment</button>
+        </div>
+    </div>
+
+    <div id="guestBlockModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button class="modal-close-btn" onclick="closeModals()" aria-label="Close">&times;</button>
+            <h2 style="display: flex; align-items: center; gap: 8px;">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round" viewBox="0 0 24 24">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0110 0v4"></path>
+                </svg>
+                Sign Up or Log In
+            </h2>
+            <p>You need to create an account to use premium features or send more messages and upload files.</p>
+            <div class="pricing-tiers" style="margin-bottom: 0;">
+                <button class="pipeline-btn-secondary" style="flex:1" onclick="window.location.href='../login.html'">Log
+                    In</button>
+                <div style="width:16px;"></div>
+                <button class="pipeline-btn-primary" style="flex:1" onclick="window.location.href='../signup.html'">Sign
+                    Up</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Hide auth links if logged in
+        document.addEventListener("DOMContentLoaded", () => {
+            if (ApiClient.isLoggedIn()) {
+                const authLinks = document.getElementById("authLinks");
+                if (authLinks) authLinks.style.display = "none";
+            }
+        });
+    </script>
+</body>
+
+</html>

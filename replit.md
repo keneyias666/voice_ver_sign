@@ -1,58 +1,34 @@
-# Voice2Sign
+# Voice2Sign (Replit / dev notes)
 
-A voice-to-sign language translation web application with a clean HTML/CSS/JS frontend and a Python FastAPI backend.
+A voice-to-sign language web app: **HTML/CSS/JS** in `public/` and **FastAPI** in `server/`.
 
-## Project Structure
+## Project structure
 
 ```
-voice_to_sign/
-├── index.html          # Login page (landing)
-├── signup.html         # Signup page
-├── dashboard.html      # Main dashboard
-├── serve.py            # Python HTTP server for frontend (port 5000)
-├── css/
-│   ├── main.css        # Core styles, variables, utilities
-│   ├── login.css       # Login page specific styles
-│   ├── signup.css      # Signup page specific styles
-│   └── dashboard.css   # Dashboard specific styles
-├── js/
-│   ├── main.js         # Theme management, utilities, toast
-│   ├── auth.js         # Authentication (login/signup)
-│   └── dashboard.js    # Dashboard functionality
-├── images/             # Logo and image assets
-├── assets/             # Additional static assets
-├── backend/
-│   ├── app.py          # FastAPI application
-│   └── requirements.txt
-└── reference/          # Reference materials
+voice2sign/
+├── app.py                  # **Single entry:** loads .env, runs uvicorn (port 5000 by default)
+├── requirements.txt
+├── server/
+│   ├── app.py              # FastAPI `app`, API routes, StaticFiles mount → public/
+│   ├── auth.py
+│   ├── config.py
+│   ├── models.py
+│   └── database.py
+└── public/                 # Web UI
 ```
 
 ## Architecture
 
-- **Frontend**: Static HTML/CSS/JS served by Python's built-in HTTP server on port 5000
-- **Backend**: FastAPI server on port 8000 (localhost only)
-- **Languages**: Python 3.12, HTML/CSS/JavaScript
+- **One process:** `python app.py` runs **uvicorn** with `server.app:app`, which serves **`public/`** and **`/api/*`** on the **same origin** (default **http://127.0.0.1:5000**).
+- **Virtual environment:** use `.venv` and `pip install -r requirements.txt`, then `python app.py`.
 
 ## Workflows
 
-- **Start application**: `python serve.py` — serves the static frontend on `0.0.0.0:5000`
-- **Backend API**: `uvicorn backend.app:app --host localhost --port 8000` — runs the FastAPI backend
-
-## Backend API Endpoints
-
-- `GET /api/health` — Health check
-- `POST /api/input/mic` — Toggle microphone state `{ "active": bool }`
-- `POST /api/input/camera` — Toggle camera state `{ "active": bool }`
-
-## Design System
-
-- **Colors**: White/black backgrounds, skin-tone accent (#D4A574)
-- **Font**: Work Sans (Google Fonts)
-- **Themes**: Light/dark mode with smooth transitions
+- **Setup**: `scripts/setup.ps1` or `scripts/setup.sh` (creates venv + installs deps).
+- **Start app**: `python app.py` → `http://127.0.0.1:5000/`
+- **Database**: SQLite at `data/voice2sign.db` by default, or `DATABASE_URL` for MySQL/PostgreSQL.
+- **Health**: `GET /api/health`
 
 ## Deployment
 
-Configured for autoscale deployment. Both services start via:
-```bash
-uvicorn backend.app:app --host localhost --port 8000 & python serve.py
-```
+Use a reverse proxy with **HTTPS** in production; set **`CORS_ORIGINS`**. Docker: `uvicorn server.app:app` (see `Dockerfile`). See **`README.md`**.

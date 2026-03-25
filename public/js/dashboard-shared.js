@@ -1,0 +1,1098 @@
+/**
+* Voice2Sign – Shared dashboard logic (used by `dashboards/hearing.html`, `deaf.html`, `admin.html`).
+ * Each page loads `js/dashboard-<role>.js` first to set `window.__VOICE2SIGN_DASHBOARD__`, then this file.
+ */
+
+let sidebarCollapsed = localStorage.getItem("sidebarCollapsed") === "true";
+let micActive = false;
+let cameraActive = false;
+let micStream = null;
+let cameraStream = null;
+let currentChatId = null;
+
+const PREFS_KEY = "dashboardPreferences";
+const USER_ROLE_KEY = "userRole";
+
+/** @type {"hearing"|"deaf"|"admin"} */
+let resolvedUserRole = "hearing";
+
+/**
+ * @type {{ role: "hearing"|"deaf"|"admin", defaultSection: string }}
+ */
+window.__VOICE2SIGN_DASHBOARD__ = window.__VOICE2SIGN_DASHBOARD__ || {
+    role: "hearing",
+    defaultSection: "voiceSign",
+};
+
+function getDashboardRuntimeConfig() {
+    return window.__VOICE2SIGN_DASHBOARD__ || { role: "hearing", defaultSection: "voiceSign" };
+}
+
+async function enforceDashboardRole(pageRole) {
+    /* Admin UI requires a signed-in admin account */
+    if (pageRole === "admin" && !ApiClient.isLoggedIn()) {
+        window.location.replace("../login.html");
+        return;
+    }
+    if (!ApiClient.isLoggedIn()) {
+        updateUserProfileUI();
+        return;
+    }
+    try {
+        const r = await ApiClient.getMe();
+        const serverRole = r?.user?.userType;
+        if (r?.user) {
+            localStorage.setItem(USER_ROLE_KEY, serverRole || "hearing");
+            localStorage.setItem("userType", serverRole || "hearing");
+            localStorage.setItem("currentUser", JSON.stringify(r.user));
+        }
+        if (!serverRole || serverRole === pageRole) {
+            if (pageRole === "hearing" && ApiClient.isLoggedIn()) {
+                document.querySelector('[data-section="signVoice"]')?.remove();
+                document.getElementById("signVoicePanel")?.remove();
+                if (document.querySelector('.sidebar-nav-item.active[data-section="signVoice"]')) showSection('voiceSign');
+            } else if (pageRole === "deaf" && ApiClient.isLoggedIn()) {
+                document.querySelector('[data-section="voiceSign"]')?.remove();
+                document.getElementById("voiceSignPanel")?.remove();
+                if (document.querySelector('.sidebar-nav-item.active[data-section="voiceSign"]')) showSection('signVoice');
+            }
+            return;
+        }
+        /* Same directory as this page: `public/dashboards/*.html` */
+        const map = {
+            hearing: "hearing.html",
+            deaf: "deaf.html",
+            admin: "admin.html",
+        };
+        const target = map[serverRole] || map.hearing;
+        if (!window.location.pathname.endsWith(target)) {
+            window.location.replace(target);
+        }
+    } catch (e) {
+        /* ignore */
+    } finally {
+        updateUserProfileUI();
+    }
+}
+
+function updateUserProfileUI() {
+    const isLoggedIn = ApiClient.isLoggedIn();
+    const btn = document.querySelector('.user-profile-btn');
+    const dropdown = document.getElementById('userProfileDropdown');
+
+    if (!btn) return;
+
+    if (!isLoggedIn) {
+        btn.innerHTML = `
+            <div class="user-avatar" style="background:var(--bg-hover); color:var(--text-secondary);">?</div>
+            <div class="user-info">
+                <span class="user-name">Guest User</span>
+                <span class="user-plan">Click to Log In</span>
+            </div>
+        `;
+        btn.onclick = () => window.location.href = '../login.html';
+        if (dropdown) dropdown.style.display = 'none';
+        return;
+    }
+
+    // Logged in
+    btn.onclick = toggleUserProfileDropdown;
+    if (dropdown) dropdown.style.display = '';
+
+    let uName = 'Elias Amaba';
+    let uHandle = '@keneyias666';
+    let uInitials = 'EA';
+
+    let uAvatarHtml = '';
+
+    try {
+        const raw = localStorage.getItem('currentUser');
+        if (raw) {
+            const uData = JSON.parse(raw);
+            if (uData.firstName || uData.lastName) {
+                uName = `${uData.firstName || ''} ${uData.lastName || ''}`.trim();
+                uInitials = (uData.firstName?.[0] || '') + (uData.lastName?.[0] || '');
+            } else if (uData.email) {
+                uName = uData.email;
+                uInitials = uData.email[0].toUpperCase();
+            }
+            if (uData.email) {
+                uHandle = '@' + uData.email.split('@')[0];
+            }
+            if (uData.avatar) {
+                uAvatarHtml = `<img src="${uData.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+            }
+        }
+    } catch (e) { }
+
+    const uType = localStorage.getItem('userType');
+    if (uType === 'admin' && !uName) {
+        uName = 'Administrator';
+    }
+
+    // Update Footer Button (Hearing / Deaf)
+    const btnAvatar = btn ? btn.querySelector('.user-avatar') : null;
+    const btnName = btn ? btn.querySelector('.user-name') : null;
+    if (btnAvatar) {
+        if (uAvatarHtml) btnAvatar.innerHTML = uAvatarHtml;
+        else btnAvatar.textContent = uInitials;
+    }
+    if (btnName) btnName.textContent = uName;
+
+    // Update Dropdown Menu content
+    if (dropdown) {
+        const dropAvatar = dropdown.querySelector('.dropdown-header .user-avatar');
+        const dropName = dropdown.querySelector('.dropdown-user-name');
+        const dropEmail = dropdown.querySelector('.dropdown-user-email');
+        if (dropAvatar) {
+            if (uAvatarHtml) dropAvatar.innerHTML = uAvatarHtml;
+            else dropAvatar.textContent = uInitials;
+        }
+        if (dropName) dropName.textContent = uName;
+        if (dropEmail) dropEmail.textContent = uHandle;
+    }
+
+    // Update Admin Topbar Name
+    const topAdminName = document.getElementById('topbarAdminName');
+    if (topAdminName) {
+        topAdminName.textContent = uName;
+    }
+}
+
+function handleAvatarUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const dataUrl = e.target.result;
+            const preview = document.getElementById('settingsAvatarPreview');
+            const initials = document.getElementById('settingsAvatarInitials');
+            if (preview) {
+                preview.src = dataUrl;
+                preview.style.display = 'block';
+            }
+            if (initials) initials.style.display = 'none';
+            localStorage.setItem('tempAvatar', dataUrl);
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function saveUserProfile() {
+    const fnEl = document.getElementById('profFirstName');
+    const lnEl = document.getElementById('profLastName');
+    const emEl = document.getElementById('profEmail');
+
+    const fName = fnEl ? fnEl.value.trim() : '';
+    const lName = lnEl ? lnEl.value.trim() : '';
+    const email = emEl ? emEl.value.trim() : '';
+    const avatar = localStorage.getItem('tempAvatar');
+
+    let currentUser = {};
+    try {
+        currentUser = JSON.parse(localStorage.getItem('currentUser')) || {};
+    } catch (e) { }
+
+    currentUser.firstName = fName;
+    currentUser.lastName = lName;
+    currentUser.email = email;
+    if (avatar) currentUser.avatar = avatar;
+
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    localStorage.removeItem('tempAvatar');
+
+    Toast.info("Profile updated successfully!");
+    updateUserProfileUI();
+}
+
+function loadUserProfileSettings() {
+    let currentUser = {};
+    try {
+        currentUser = JSON.parse(localStorage.getItem('currentUser')) || {};
+    } catch (e) { }
+
+    if (document.getElementById('profFirstName')) document.getElementById('profFirstName').value = currentUser.firstName || '';
+    if (document.getElementById('profLastName')) document.getElementById('profLastName').value = currentUser.lastName || '';
+    if (document.getElementById('profEmail')) document.getElementById('profEmail').value = currentUser.email || '';
+
+    if (currentUser.avatar) {
+        const preview = document.getElementById('settingsAvatarPreview');
+        const initials = document.getElementById('settingsAvatarInitials');
+        if (preview) {
+            preview.src = currentUser.avatar;
+            preview.style.display = 'block';
+        }
+        if (initials) {
+            initials.style.display = 'none';
+        }
+    }
+}
+
+function applyDashboardPageConfig(cfg) {
+    resolvedUserRole = cfg.role;
+    const root = document.getElementById("dashboardRoot");
+    document.documentElement.dataset.userRole = cfg.role;
+    if (root) {
+        root.dataset.userRole = cfg.role;
+        root.classList.remove("dashboard--hearing", "dashboard--deaf", "dashboard--admin");
+        if (cfg.role === "admin") root.classList.add("dashboard--admin");
+        else if (cfg.role === "deaf") root.classList.add("dashboard--deaf");
+        else root.classList.add("dashboard--hearing");
+    }
+    const banner = document.getElementById("roleBanner");
+    if (banner) {
+        const txt = {
+            hearing: "Hearing dashboard: Voice → Sign first for speech-to-sign. Use Text chat for notes.",
+            deaf: "Deaf / HoH dashboard: Sign → Voice first — camera and signing prioritized.",
+            admin: "Admin dashboard: system overview and all translation flows.",
+            guest: "Guest Dashboard: Try the translation demo! Log in or Sign up to save chats and unlock advanced features."
+        };
+        banner.textContent = txt[cfg.role] || txt.guest;
+    }
+}
+
+async function loadAdminStats() {
+    if (!document.getElementById("adminPanel")) return;
+    try {
+        const s = await ApiClient.getAdminStats();
+        const set = (id, v) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = v != null ? String(v) : "—";
+        };
+        set("statUsersTotal", s.usersTotal);
+        set("statChatsTotal", s.chatsTotal);
+        set("statHearing", s.usersByType?.hearing);
+        set("statDeaf", s.usersByType?.deaf);
+    } catch (e) {
+        Toast.error("Could not load admin statistics.");
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MIC LEVEL (Web Audio — animates when sound is captured)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+let micAudioContext = null;
+let micAnalyser = null;
+let micSourceNode = null;
+let micLevelRaf = null;
+
+function getActiveMicStream() {
+    if (micStream && micStream.getAudioTracks().some((t) => t.readyState === "live")) return micStream;
+    if (pipelineVoiceSignMicStream && pipelineVoiceSignMicStream.getAudioTracks().some((t) => t.readyState === "live")) {
+        return pipelineVoiceSignMicStream;
+    }
+    return null;
+}
+
+function stopMicLevelMeter() {
+    if (micLevelRaf) {
+        cancelAnimationFrame(micLevelRaf);
+        micLevelRaf = null;
+    }
+    if (micSourceNode) {
+        try {
+            micSourceNode.disconnect();
+        } catch (e) {
+            /* ignore */
+        }
+        micSourceNode = null;
+    }
+    if (micAnalyser) {
+        try {
+            micAnalyser.disconnect();
+        } catch (e) {
+            /* ignore */
+        }
+        micAnalyser = null;
+    }
+    if (micAudioContext && micAudioContext.state !== "closed") {
+        micAudioContext.close();
+    }
+    micAudioContext = null;
+    document.querySelectorAll(".mic-level-meter").forEach((el) => el.classList.remove("mic-level-meter--active"));
+}
+
+function syncMicMeter() {
+    const stream = getActiveMicStream();
+    const ind = document.getElementById("micIndicator");
+    if (ind) ind.classList.toggle("active", !!stream);
+    if (!stream) {
+        stopMicLevelMeter();
+        return;
+    }
+    stopMicLevelMeter();
+    try {
+        micAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+        micAnalyser = micAudioContext.createAnalyser();
+        micAnalyser.fftSize = 256;
+        micAnalyser.smoothingTimeConstant = 0.72;
+        micSourceNode = micAudioContext.createMediaStreamSource(stream);
+        micSourceNode.connect(micAnalyser);
+        const buf = new Uint8Array(micAnalyser.frequencyBinCount);
+        const tick = () => {
+            if (!micAnalyser) return;
+            micAnalyser.getByteFrequencyData(buf);
+            let sum = 0;
+            for (let i = 0; i < buf.length; i++) sum += buf[i];
+            const avg = sum / buf.length / 255;
+            document.querySelectorAll(".mic-level-meter").forEach((meter) => {
+                meter.classList.add("mic-level-meter--active");
+                meter.querySelectorAll(".mic-level-bar").forEach((bar, i) => {
+                    const h = Math.min(1, avg * (1.1 + i * 0.12));
+                    bar.style.setProperty("--mic-level", String(h));
+                });
+            });
+            micLevelRaf = requestAnimationFrame(tick);
+        };
+        tick();
+    } catch (e) {
+        console.warn("Mic level meter:", e);
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SIDEBAR
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function toggleSidebar() {
+    sidebarCollapsed = !sidebarCollapsed;
+    localStorage.setItem("sidebarCollapsed", String(sidebarCollapsed));
+    const sidebar = document.getElementById("sidebar") || document.querySelector(".maxton-sidebar");
+    if (sidebar) sidebar.classList.toggle("collapsed", sidebarCollapsed);
+}
+
+function toggleUserProfileDropdown(event) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    const dropdown = document.getElementById("userProfileDropdown");
+    if (dropdown) {
+        dropdown.classList.toggle("active");
+    }
+}
+
+function toggleDropdown(element) {
+    if (element) {
+        element.classList.toggle("active");
+        const icon = element.querySelector('span'); // usually contains ‹
+        if (icon) {
+            icon.textContent = element.classList.contains("active") ? "⌄" : "‹";
+        }
+    }
+}
+
+// Close the dropdown if clicking outside
+document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('userProfileDropdown');
+    const btn = document.querySelector('.user-profile-btn');
+    if (dropdown && dropdown.classList.contains('show')) {
+        // Clicked outside, or clicked a functional menu item
+        if (
+            (!dropdown.contains(e.target) && (!btn || !btn.contains(e.target))) ||
+            e.target.closest('.dropdown-item')
+        ) {
+            dropdown.classList.remove('show');
+        }
+    }
+});
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SECTION SWITCHING
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function setDashboardTitle(title) {
+    const el = document.getElementById("dashboardTitle");
+    if (el) el.textContent = title;
+}
+
+/**
+ * Main shell: Sign→Voice, Voice→Sign, Text chat, Preferences, Settings.
+ * Header (#mainHeader) is hidden only for preferences/settings full-page panels.
+ */
+function showSection(section) {
+    document.querySelectorAll(".sidebar-nav-item").forEach((b) => b.classList.remove("active"));
+    document.querySelectorAll(".section-panel").forEach((el) => el.classList.remove("visible"));
+
+    const roleBanner = document.getElementById("roleBanner");
+    if (roleBanner) {
+        roleBanner.classList.toggle("section-hidden", section === "preferences" || section === "settings");
+    }
+
+    const mainHeader = document.getElementById("mainHeader");
+    const chatBody = document.getElementById("chatBody");
+    const composer = document.getElementById("mainComposer");
+
+    if (section === "chat") {
+        mainHeader?.classList.remove("section-hidden");
+        chatBody?.classList.remove("section-hidden");
+        composer?.classList.remove("section-hidden");
+        document.querySelector('[data-section="chat"]')?.classList.add("active");
+        setDashboardTitle("Text chat");
+        return;
+    }
+
+    if (section === "signVoice") {
+        mainHeader?.classList.remove("section-hidden");
+        chatBody?.classList.add("section-hidden");
+        composer?.classList.add("section-hidden");
+        document.querySelector('[data-section="signVoice"]')?.classList.add("active");
+        document.getElementById("signVoicePanel")?.classList.add("visible");
+        setDashboardTitle("Sign → Voice");
+        return;
+    }
+
+    if (section === "voiceSign") {
+        mainHeader?.classList.remove("section-hidden");
+        chatBody?.classList.add("section-hidden");
+        composer?.classList.add("section-hidden");
+        document.querySelector('[data-section="voiceSign"]')?.classList.add("active");
+        document.getElementById("voiceSignPanel")?.classList.add("visible");
+        setDashboardTitle("Voice → Sign");
+        return;
+    }
+
+    if (section === "admin") {
+        const ap = document.getElementById("adminPanel");
+        if (!ap) {
+            Toast.warning("Open the admin dashboard to use this section.");
+            return;
+        }
+        mainHeader?.classList.remove("section-hidden");
+        chatBody?.classList.add("section-hidden");
+        composer?.classList.add("section-hidden");
+        document.querySelector('[data-section="admin"]')?.classList.add("active");
+        ap.classList.add("visible");
+        setDashboardTitle("Admin");
+        loadAdminStats();
+        return;
+    }
+
+    if (section === "preferences" || section === "settings") {
+        mainHeader?.classList.add("section-hidden");
+        chatBody?.classList.add("section-hidden");
+        composer?.classList.add("section-hidden");
+        const activeBtn = document.querySelector(`[data-section="${section}"]`);
+        if (activeBtn) activeBtn.classList.add("active");
+        const panel = document.getElementById(`${section}Panel`);
+        if (panel) panel.classList.add("visible");
+        setDashboardTitle(section === "preferences" ? "Preferences" : "Settings");
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CAMERA
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function syncCamera(isActive) {
+    const panel = document.getElementById("cameraPanel");
+    const btn = document.getElementById("cameraBtn");
+    const preview = document.getElementById("cameraPreview");
+    const dot = document.getElementById("cameraDot");
+    const stateText = document.getElementById("cameraStateText");
+
+    panel?.classList.toggle("active", isActive);
+    btn?.classList.toggle("active", isActive);
+    if (!isActive && preview) preview.srcObject = null;
+    dot?.classList.toggle("live", isActive);
+
+    if (stateText) {
+        stateText.textContent = isActive ? "Live" : "Off";
+        isActive ? stateText.removeAttribute("data-off") : stateText.setAttribute("data-off", "");
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MIC / CAMERA INPUT
+   ══════════════════════════════════════════════════════════════════════════ */
+
+async function handleInput(type) {
+    const isMic = type === "mic";
+    const nextState = isMic ? !micActive : !cameraActive;
+    const btn = document.getElementById(isMic ? "micBtn" : "cameraBtn");
+
+    try {
+        if (isMic) {
+            if (nextState) {
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            } else if (micStream) {
+                micStream.getTracks().forEach((t) => t.stop());
+                micStream = null;
+            }
+            document.getElementById("micIndicator")?.classList.toggle("active", nextState);
+        } else {
+            if (nextState) {
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+                });
+                const video = document.getElementById("cameraPreview");
+                if (video) video.srcObject = cameraStream;
+                syncCamera(true);
+            } else if (cameraStream) {
+                cameraStream.getTracks().forEach((t) => t.stop());
+                cameraStream = null;
+                syncCamera(false);
+            } else {
+                syncCamera(false);
+            }
+        }
+
+        const result = await ApiClient.toggleDevice(type, nextState);
+        if (isMic) {
+            micActive = result.active;
+            document.getElementById("micIndicator")?.classList.toggle("active", micActive);
+        } else {
+            cameraActive = result.active;
+            if (!cameraActive && cameraStream) {
+                cameraStream.getTracks().forEach((t) => t.stop());
+                cameraStream = null;
+            }
+            syncCamera(cameraActive);
+        }
+
+        btn?.classList.toggle("active", result.active);
+        const label = isMic ? "Microphone" : "Camera";
+        Toast.info(`${label} ${result.active ? "on" : "off"}.`);
+        syncMicMeter();
+    } catch (error) {
+        if (isMic && micStream) { micStream.getTracks().forEach((t) => t.stop()); micStream = null; }
+        if (!isMic && cameraStream) { cameraStream.getTracks().forEach((t) => t.stop()); cameraStream = null; syncCamera(false); }
+        document.getElementById("micIndicator")?.classList.remove("active");
+        syncMicMeter();
+        const label = isMic ? "Microphone" : "Camera";
+        Toast.error(`${label} unavailable. Check browser permissions.`);
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CHAT MESSAGES
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function removeWelcome() {
+    const el = document.getElementById("welcomeCard");
+    if (el) {
+        el.style.opacity = "0";
+        el.style.transform = "translateY(-8px)";
+        el.style.transition = "opacity 0.2s, transform 0.2s";
+        setTimeout(() => el.remove(), 200);
+    }
+}
+
+function addMessage(role, text) {
+    const body = document.getElementById("chatBody");
+    if (!body) return;
+
+    const msg = document.createElement("div");
+    msg.className = `message ${role}`;
+
+    const avatar = document.createElement("div");
+    avatar.className = "message-avatar";
+    avatar.textContent = role === "user" ? "U" : "V";
+
+    const content = document.createElement("div");
+    content.className = "message-content";
+    content.textContent = text;
+
+    msg.appendChild(avatar);
+    msg.appendChild(content);
+    body.appendChild(msg);
+    body.scrollTop = body.scrollHeight;
+}
+
+async function sendMessage() {
+    const input = document.getElementById("composerInput");
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) return;
+
+    if (!ApiClient.isLoggedIn()) {
+        let guestCount = parseInt(localStorage.getItem('guestMessageCount') || '0', 10);
+        // Removed the 3-message guest limit for the test chat presentation
+        localStorage.setItem('guestMessageCount', String(guestCount + 1));
+    }
+
+    removeWelcome();
+    addMessage("user", text);
+    input.value = "";
+
+    // Auto-create a chat if none exists
+    if (!currentChatId && ApiClient.isLoggedIn()) {
+        try {
+            const res = await ApiClient.createChat(text.substring(0, 40));
+            if (res?.chat) {
+                currentChatId = res.chat.id;
+                addConversationToList(res.chat);
+            }
+        } catch (e) {
+            console.warn("Could not create chat:", e);
+        }
+    }
+
+    // Send to backend
+    if (currentChatId && ApiClient.isLoggedIn()) {
+        try {
+            const res = await ApiClient.sendMessage(currentChatId, text);
+            if (res?.assistantMessage) {
+                addMessage("assistant", res.assistantMessage.content);
+            }
+        } catch (e) {
+            addMessage("assistant", `Demo response for: "${text}"`);
+        }
+    } else {
+        // Test chat for guest user
+        const guestResponses = [
+            "Hello! I am Voice2Sign's demo AI. I can show you how translations will look.",
+            "That's an interesting point! In the full version, I can translate that into ASL with animations.",
+            "I'm currently running in guest mode, so my responses are pre-programmed. Sign up to unlock full capabilities!"
+        ];
+        let guestCount = parseInt(localStorage.getItem('guestMessageCount') || '1', 10);
+        let msgIndex = Math.max(0, guestCount - 1) % guestResponses.length;
+        
+        setTimeout(() => addMessage("assistant", guestResponses[msgIndex]), 600);
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MODALS AND PRO FEATURES
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function closeModals() {
+    document.querySelectorAll('.modal-overlay').forEach(el => el.classList.add('hidden'));
+}
+
+function handleAttachClick() {
+    if (!ApiClient.isLoggedIn()) {
+        document.getElementById('guestBlockModal')?.classList.remove('hidden');
+        return;
+    }
+    document.getElementById('proModal')?.classList.remove('hidden');
+}
+
+window.handleSubscribe = function (tier) {
+    if (!ApiClient.isLoggedIn()) {
+        closeModals();
+        document.getElementById('guestBlockModal')?.classList.remove('hidden');
+        return;
+    }
+    const payTierName = document.getElementById('payTierName');
+    if (payTierName) payTierName.textContent = tier;
+    closeModals();
+    document.getElementById('paymentModal')?.classList.remove('hidden');
+};
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CONVERSATION LIST
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function addConversationToList(chat) {
+    const list = document.getElementById("chatList");
+    if (!list) return;
+
+    document.querySelectorAll(".chat-item").forEach((i) => i.classList.remove("active"));
+
+    const row = document.createElement("div");
+    row.className = "chat-item active";
+    row.dataset.chatId = chat.id;
+    row.onclick = function () {
+        document.querySelectorAll(".chat-item").forEach((i) => i.classList.remove("active"));
+        this.classList.add("active");
+        showSection("chat");
+        loadChat(chat.id);
+    };
+    row.innerHTML = `
+        <svg class="chat-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+        <span class="chat-item-name">${chat.title || "New conversation"}</span>
+        <div class="chat-item-actions">
+            <button onclick="event.stopPropagation();togglePin(this,'${chat.id}')" aria-label="Pin"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg></button>
+            <button onclick="event.stopPropagation();deleteChat(this,'${chat.id}')" aria-label="Delete"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+        </div>`;
+    list.prepend(row);
+}
+
+async function loadChat(chatId) {
+    currentChatId = chatId;
+    const body = document.getElementById("chatBody");
+    if (!body) return;
+    body.innerHTML = "";
+
+    if (!ApiClient.isLoggedIn()) return;
+
+    try {
+        const res = await ApiClient.getMessages(chatId);
+        if (res?.messages) {
+            res.messages.forEach((m) => addMessage(m.role, m.content));
+        }
+    } catch (e) {
+        console.warn("Could not load messages:", e);
+    }
+}
+
+async function createNewChat() {
+    if (!ApiClient.isLoggedIn()) {
+        Toast.warning("Please log in to create conversations.");
+        return;
+    }
+
+    try {
+        const res = await ApiClient.createChat("New conversation");
+        if (res?.chat) {
+            currentChatId = res.chat.id;
+            addConversationToList(res.chat);
+            const body = document.getElementById("chatBody");
+            if (body) body.innerHTML = "";
+            showSection("chat");
+            Toast.success("New conversation started.");
+        }
+    } catch (e) {
+        Toast.error("Could not create conversation.");
+    }
+}
+
+async function togglePin(button, chatId) {
+    try {
+        const res = await ApiClient.togglePinChat(chatId);
+        const pinned = res?.chat?.pinned;
+        Toast.info(pinned ? "Conversation pinned." : "Conversation unpinned.");
+    } catch (e) {
+        Toast.error("Could not pin conversation.");
+    }
+}
+
+async function deleteChat(button, chatId) {
+    const row = button.closest(".chat-item");
+
+    try {
+        await ApiClient.deleteChat(chatId);
+        if (row) {
+            row.style.opacity = "0";
+            row.style.transform = "translateX(-8px)";
+            row.style.transition = "opacity 0.2s, transform 0.2s";
+            setTimeout(() => row.remove(), 200);
+        }
+        if (currentChatId === chatId) {
+            currentChatId = null;
+            const body = document.getElementById("chatBody");
+            if (body) body.innerHTML = "";
+        }
+        Toast.success("Conversation deleted.");
+    } catch (e) {
+        Toast.error("Could not delete conversation.");
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PREFERENCES
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function getDefaultPrefs() {
+    return {
+        autoplay: false,
+        cameraDefault: false,
+        compactChat: false,
+        smoothMotion: true,
+        sound: false,
+        highContrast: false,
+        reducedMotion: false,
+        language: "English",
+        responseStyle: "balanced",
+        cameraQuality: "balanced",
+    };
+}
+
+function loadPrefsToForm() {
+    const defaults = getDefaultPrefs();
+    let prefs = { ...defaults };
+    const saved = localStorage.getItem(PREFS_KEY);
+    if (saved) {
+        try { prefs = { ...defaults, ...JSON.parse(saved) }; } catch (e) { }
+    }
+
+    const map = {
+        prefAutoplay: "autoplay",
+        prefCameraDefault: "cameraDefault",
+        prefCompactChat: "compactChat",
+        prefSmoothMotion: "smoothMotion",
+        prefSound: "sound",
+        prefHighContrast: "highContrast",
+        prefReducedMotion: "reducedMotion",
+    };
+
+    for (const [elId, key] of Object.entries(map)) {
+        const el = document.getElementById(elId);
+        if (el) el.checked = !!prefs[key];
+    }
+
+    const selects = { prefLanguage: "language", prefResponseStyle: "responseStyle", prefCameraQuality: "cameraQuality" };
+    for (const [elId, key] of Object.entries(selects)) {
+        const el = document.getElementById(elId);
+        if (el) el.value = prefs[key] || defaults[key];
+    }
+
+    return prefs;
+}
+
+function applyPrefsVisuals(prefs) {
+    document.body.classList.toggle("high-contrast", !!prefs.highContrast);
+    document.body.classList.toggle("reduced-motion", !!prefs.reducedMotion);
+    const chatBody = document.getElementById("chatBody");
+    if (chatBody) {
+        chatBody.style.maxWidth = prefs.compactChat ? "min(880px, 100%)" : "";
+        chatBody.style.margin = prefs.compactChat ? "0 auto" : "";
+    }
+}
+
+async function savePreferencesSettings() {
+    const prefs = {
+        autoplay: !!document.getElementById("prefAutoplay")?.checked,
+        cameraDefault: !!document.getElementById("prefCameraDefault")?.checked,
+        compactChat: !!document.getElementById("prefCompactChat")?.checked,
+        smoothMotion: !!document.getElementById("prefSmoothMotion")?.checked,
+        sound: !!document.getElementById("prefSound")?.checked,
+        highContrast: !!document.getElementById("prefHighContrast")?.checked,
+        reducedMotion: !!document.getElementById("prefReducedMotion")?.checked,
+        language: document.getElementById("prefLanguage")?.value || "English",
+        responseStyle: document.getElementById("prefResponseStyle")?.value || "balanced",
+        cameraQuality: document.getElementById("prefCameraQuality")?.value || "balanced",
+    };
+
+    localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+    applyPrefsVisuals(prefs);
+    Toast.info('Preferences saved successfully!');
+
+    if (ApiClient.isLoggedIn()) {
+        try { await ApiClient.savePreferences(prefs); } catch (e) { }
+    }
+
+    Toast.success("Preferences saved.");
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SETTINGS / SESSION
+   ══════════════════════════════════════════════════════════════════════════ */
+
+function signOutApp() {
+    ApiClient.clearToken();
+    try {
+        localStorage.removeItem("userRole");
+    } catch (e) {
+        /* ignore */
+    }
+    Toast.info("Signed out.");
+    setTimeout(() => {
+        window.location.href = "../login.html";
+    }, 400);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PIPELINE FLOWS (conceptual diagram: Sign→Voice · Voice→Sign)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+let pipelineSignVoiceStream = null;
+let pipelineVoiceSignMicStream = null;
+
+async function pipelineToggleCamera() {
+    const video = document.getElementById("signVoiceVideo");
+    const dot = document.getElementById("svCameraDot");
+    if (pipelineSignVoiceStream) {
+        pipelineSignVoiceStream.getTracks().forEach((t) => t.stop());
+        pipelineSignVoiceStream = null;
+        if (video) video.srcObject = null;
+        dot?.classList.remove("live");
+        Toast.info("Camera off.");
+        return;
+    }
+    try {
+        pipelineSignVoiceStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+            audio: false,
+        });
+        if (video) video.srcObject = pipelineSignVoiceStream;
+        dot?.classList.add("live");
+        Toast.success("Camera on — frames go to OpenCV / OCR when wired.");
+    } catch (e) {
+        Toast.error("Camera unavailable. Allow permission or use HTTPS.");
+    }
+}
+
+async function pipelineToggleMic() {
+    const dot = document.getElementById("vsMicDot");
+    if (pipelineVoiceSignMicStream) {
+        pipelineVoiceSignMicStream.getTracks().forEach((t) => t.stop());
+        pipelineVoiceSignMicStream = null;
+        dot?.classList.remove("live");
+        Toast.info("Microphone off.");
+        syncMicMeter();
+        return;
+    }
+    try {
+        pipelineVoiceSignMicStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        dot?.classList.add("live");
+        Toast.success("Microphone on — audio for Whisper / SR when wired.");
+        syncMicMeter();
+    } catch (e) {
+        Toast.error("Microphone unavailable.");
+        syncMicMeter();
+    }
+}
+
+async function pipelineSignVoiceRecognize() {
+    const video = document.getElementById("signVoiceVideo");
+    const canvas = document.getElementById("signVoiceCanvas");
+    const ta = document.getElementById("signVoiceText");
+    const note = document.getElementById("signVoiceApiNote");
+    if (!video?.srcObject || !canvas) {
+        Toast.warning("Turn on the camera first.");
+        return;
+    }
+    const ctx = canvas.getContext("2d");
+    const w = video.videoWidth || 640;
+    const h = video.videoHeight || 480;
+    canvas.width = w;
+    canvas.height = h;
+    ctx.drawImage(video, 0, 0, w, h);
+    const imageBase64 = canvas.toDataURL("image/jpeg", 0.85).split(",")[1] || "";
+
+    try {
+        const res = await ApiClient.pipelineSignRecognize({ imageBase64 });
+        if (note) {
+            note.textContent = res.message
+                ? String(res.message)
+                : "Stub: connect OpenCV + Tesseract / Cloud Vision on the server.";
+        }
+        if (ta) {
+            ta.value = res.text || `[Stub] No OCR yet — ${res.integration?.join(", ") || "see /api/pipeline"}`;
+        }
+        Toast.info("Recognize request sent (stub).");
+    } catch (err) {
+        Toast.error(err.message || String(err));
+    }
+}
+
+async function pipelineSignVoiceSpeak() {
+    const ta = document.getElementById("signVoiceText");
+    const text = (ta?.value || "").trim();
+    if (!text) {
+        Toast.warning("No text to speak.");
+        return;
+    }
+    try {
+        await ApiClient.pipelineSignSpeak({ text });
+        if ("speechSynthesis" in window) {
+            speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = "en-US";
+            speechSynthesis.speak(u);
+        }
+        Toast.success("Speaking (browser demo). Replace with pyttsx3 / Coqui on server.");
+    } catch (err) {
+        Toast.error(err.message || String(err));
+    }
+}
+
+async function pipelineVoiceSignTranscribe() {
+    const ta = document.getElementById("voiceSignTranscript");
+    try {
+        const res = await ApiClient.pipelineVoiceTranscribe({
+            note: "Send audio blob to Whisper in production",
+        });
+        if (ta) {
+            ta.value = res.text || `[Stub] ${res.message || "Wire Whisper / SpeechRecognition"}`;
+        }
+        Toast.info("Transcribe stub — connect Whisper API.");
+    } catch (err) {
+        Toast.error(err.message || String(err));
+    }
+}
+
+async function pipelineVoiceSignRender() {
+    const ta = document.getElementById("voiceSignTranscript");
+    const text = (ta?.value || "").trim() || "sign language gesture";
+    const ph = document.getElementById("voiceSignImagePh");
+    const img = document.getElementById("voiceSignImage");
+    try {
+        const res = await ApiClient.pipelineVoiceRender({ text });
+        if (ph) {
+            ph.textContent = res.message || "Connect Stable Diffusion or a sign-avatar API.";
+        }
+        if (img && res.imageUrl) {
+            img.src = res.imageUrl;
+            img.style.display = "block";
+            ph.style.display = "none";
+        } else if (img) {
+            img.style.display = "none";
+            ph.style.display = "block";
+        }
+        Toast.info("Render stub — wire SD / web API.");
+    } catch (err) {
+        Toast.error(err.message || String(err));
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   INIT
+   ══════════════════════════════════════════════════════════════════════════ */
+
+document.addEventListener("DOMContentLoaded", async () => {
+    const cfg = getDashboardRuntimeConfig();
+    await enforceDashboardRole(cfg.role);
+    applyDashboardPageConfig(cfg);
+    showSection(cfg.defaultSection);
+
+    // Sidebar state
+    document.getElementById("sidebar")?.classList.toggle("collapsed", sidebarCollapsed);
+
+    // Camera panel off
+    syncCamera(false);
+
+    // Load preferences
+    const loadedPrefs = loadPrefsToForm();
+    applyPrefsVisuals(loadedPrefs);
+
+    // Load chat history
+    if (ApiClient.isLoggedIn()) {
+        try {
+            const res = await ApiClient.getChats();
+            if (res?.chats) {
+                res.chats.reverse().forEach((chat) => addConversationToList(chat));
+            }
+        } catch (e) {
+            console.warn("Could not load chats:", e);
+        }
+    }
+
+    // Composer enter key
+    const composerInput = document.getElementById("composerInput");
+    if (composerInput) {
+        composerInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    }
+
+    try {
+        const st = await ApiClient.pipelineStatus();
+        console.info("Pipeline capabilities:", st?.flows);
+    } catch (e) {
+        /* offline */
+    }
+
+    syncMicMeter();
+
+    // Inject Feedback option for logged-in users
+    if (window.ApiClient && ApiClient.isLoggedIn()) {
+        const navButtons = document.getElementById("sidebarNavButtons");
+        if (navButtons) {
+            const feedbackBtn = document.createElement("button");
+            feedbackBtn.type = "button";
+            feedbackBtn.className = "sidebar-nav-item";
+            feedbackBtn.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg> Send Feedback`;
+            feedbackBtn.onclick = () => {
+                if (window.Toast) Toast.info("Feedback dialog opened (Stub)");
+            };
+            navButtons.appendChild(feedbackBtn);
+        }
+    }
+});

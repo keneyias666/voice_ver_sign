@@ -1,421 +1,274 @@
-# Voice2Sign Frontend - Clean Architecture
+# Voice2Sign
 
-## 📁 Project Structure
+Web app for voice ↔ sign language workflows. The **frontend is served by the same FastAPI process** as the API, so you run **one server** on localhost (or behind a reverse proxy in production).
+
+## Project layout
 
 ```
-voice_to_sign/
-├── README.md                        # Project documentation
-├── index.html                       # Login page (landing)
-├── signup.html                      # Signup page
-├── dashboard.html                   # Main dashboard
-├── css/
-│   ├── main.css                     # Core styles, variables, utilities
-│   ├── login.css                    # Login page specific styles
-│   ├── signup.css                   # Signup page specific styles
-│   └── dashboard.css                # Dashboard specific styles
-├── js/
-│   ├── main.js                      # Theme management, utilities, toast
-│   ├── auth.js                      # Authentication (login/signup)
-│   └── dashboard.js                 # Dashboard functionality
-├── images/
-│   ├── README.md                    # Image placement instructions
-│   └── voice2sign.png               # Logo (add this)
-├── assets/
-│   └── README.md                    # Additional assets guide
-├── desktop.ini                      # Windows metadata file
-└── .                                # Extend with backend or deployment files
+voice2sign/
+├── .venv/                  # Python virtual environment (create locally — not committed)
+├── app.py                  # **Run this** — loads .env, starts uvicorn (use with venv)
+├── requirements.txt        # Pinned dependencies
+├── .env.example            # Copy to .env for local secrets / DATABASE_URL
+├── Dockerfile              # Container image (API + static UI)
+├── docker-compose.yml      # Example: app + PostgreSQL
+├── scripts/
+│   ├── setup.ps1           # Windows: create venv + pip install
+│   └── setup.sh            # Linux/macOS: same
+├── server/
+│   ├── app.py              # FastAPI app, routes, static mount
+│   ├── auth.py             # JWT / password helpers
+│   ├── config.py           # DATABASE_URL, CORS helpers
+│   ├── models.py           # SQLAlchemy ORM models
+│   └── database.py         # Engine, sessions, CRUD
+├── docs/
+│   ├── DATABASE.md         # DB / migrations notes
+│   └── TECH_STACK.md       # Spec alignment (MySQL 8, OpenCV, Whisper, etc.)
+└── public/                 # Static web app (only copy served at runtime)
+    ├── index.html
+    ├── dashboard.html      # Redirects to dashboards/hearing.html (legacy URL)
+    ├── dashboards/         # Role-specific UIs (HTML + thin CSS hooks)
+    │   ├── hearing.html
+    │   ├── deaf.html
+    │   └── admin.html
+    ├── css/                # styles.css + dashboard-{hearing,deaf,admin}.css
+    ├── js/                 # app.js, api.js, auth.js, dashboard-shared.js, dashboard-*.js (boot)
+    ├── login.html
+    └── ...
 ```
 
----
+**Important:** The running app loads static files from **`public/`** only (`server/app.py`).
 
-## 🎨 Design System
+### Why does `app.py` start Uvicorn?
 
-### Color Palette
-- **Light Mode**: Pure white (#FFFFFF) background, black (#000000) text
-- **Dark Mode**: Near black (#0A0A0A) background, white (#FFFFFF) text
-- **Accent**: Skin tone (#D4A574) - warm, accessible
-- **Borders**: Subtle grays (#E5E5E5 light, #262626 dark)
+**FastAPI** is an **ASGI** app. It needs an ASGI server (**Uvicorn** is the usual choice) to handle `/api/...` (auth, chats, DB) and to serve `public/` on the same origin. Python’s **`http.server`** only serves static files and **cannot** run your API. **`app.py`** is already the minimal “loader”: load `.env` → run Uvicorn.
 
-### Typography
-- **Font**: Work Sans (Google Fonts)
-- **Sizes**: 52px (hero), 32px (title), 15px (body)
-- **Weights**: 400 (regular), 500 (medium), 600 (semibold), 700 (bold)
+## Virtual environment (recommended)
 
-### Spacing
-- **Base unit**: 4px grid system
-- **Common**: 8px, 12px, 16px, 20px, 24px, 32px, 48px
+Always use a **venv** so dependencies match production and don’t pollute global Python.  
+**VS Code / Pylance:** the workspace is set to **`voice2sign/.venv`** so imports like `sqlalchemy` resolve; if your OS differs, choose **Python: Select Interpreter** and point at `.venv` (Windows: `Scripts\python.exe`, Linux/macOS: `bin/python`).
 
----
+### Windows (PowerShell)
 
-## 🚀 Quick Start
-
-### 1. Setup Files
-
-Place your logo at:
-```
-images/voice2sign.png (32×32px or larger)
+```powershell
+cd voice2sign
+.\scripts\setup.ps1
+.\.venv\Scripts\Activate.ps1
+python app.py
 ```
 
-If you don't have a logo yet, the pages will work fine - just showing the text "Voice2Sign".
+### Linux / macOS
 
-### 2. Open in Browser
-
-Simply open any HTML file:
 ```bash
-# Login page (main entry)
-open index.html
-
-# Or signup
-open signup.html
-
-# Or dashboard
-open dashboard.html
+cd voice2sign
+chmod +x scripts/setup.sh
+./scripts/setup.sh
+source .venv/bin/activate
+python app.py
 ```
 
-### 3. Test Features
+### Manual venv
 
-**Theme Toggle:**
-- Click moon/sun icon in header
-- Smooth 0.4s transition between light/dark
-
-**Login:**
-- Social login buttons (Google, Facebook)
-- Email/password form
-- Password visibility toggle
-- "Remember me" checkbox
-
-**Dashboard:**
-- Pin/unpin conversations
-- Delete conversations
-- Mode toggle (Hearing/Deaf)
-- Theme toggle in sidebar
-
----
-
-## ✨ Key Features
-
-### Smooth Theme Transitions
-
-**Implemented in `css/main.css`:**
-```css
-/* Smooth theme transition for all elements */
-* {
-    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
+```bash
+cd voice2sign
+python -m venv .venv
+# Windows: .\.venv\Scripts\activate
+# Unix:    source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+python app.py
 ```
 
-**Duration:** 0.4 seconds (configurable via CSS variable)
-**Timing:** Smooth cubic-bezier easing
-**Elements:** All backgrounds, borders, text colors smoothly animate
+Default URL: **http://127.0.0.1:5000/** → **hearing dashboard** (`/dashboards/hearing.html`; `/dashboard.html` redirects there). After login, users are sent to **`/dashboards/{hearing|deaf|admin}.html`** by account type. Log in is optional (links in the header). Health: **GET** `/api/health`.
 
-### Separated Architecture
+## Configuration (.env)
 
-**HTML** - Structure only, no inline styles
-**CSS** - All styling in separate files
-**JavaScript** - All logic in separate files
+1. Copy **`.env.example`** → **`.env`** in `voice2sign/`.
+2. Optional variables:
+   - **`DATABASE_URL`** — if unset, SQLite is used at **`data/voice2sign.db`**.
+   - **`V2S_SECRET`** — JWT signing key (**set a long random value in production**).
+   - **`CORS_ORIGINS`** — comma-separated origins; use your real domain in production (not `*`).
+   - **`HOST`** / **`PORT`** — bind address (default `0.0.0.0` / **`5000`**).
 
-Benefits:
-- ✅ Easy to maintain
-- ✅ Easy to update colors/styling
-- ✅ Easy to add new features
-- ✅ Clean code separation
-- ✅ Ready for backend integration
+**`app.py`** loads **`.env`** automatically before starting the server.
 
----
+### Dev auto-reload (uvicorn)
 
-## 🔧 File Descriptions
+Reload **only** watches **`server/`** and **`public/`**, so edits under **`.venv`** don’t trigger endless restarts. If you still want no reload: **`UVICORN_RELOAD=false`** in `.env` or run production-style:
 
-### CSS Files
+`uvicorn server.app:app --host 0.0.0.0 --port 5000` (no `--reload`).
 
-**main.css** (Core Styles)
-- CSS variables for themes
-- Base styles and resets
-- Common components (buttons, forms, cards)
-- Utility classes
-- Smooth theme transitions
-- Responsive breakpoints
+## Database (SQLite, MySQL 8, or PostgreSQL)
 
-**login.css** (Login Page)
-- Hero section styles
-- Login card layout
-- Features list
-- Responsive grid
-- Page-specific animations
+- **Local dev (default):** SQLite at **`data/voice2sign.db`** — no extra setup; tables are created on startup.
+- **MySQL 8.0** (XAMPP / Workbench): `pip install -r requirements.txt` includes **`pymysql`**. Set e.g.  
+  `DATABASE_URL=mysql+pymysql://user:pass@127.0.0.1:3306/voice2sign`
+- **PostgreSQL:** e.g. `DATABASE_URL=postgresql+psycopg2://user:pass@host:5432/voice2sign`
 
-**dashboard.css** (Dashboard)
-- Sidebar navigation
-- Chat interface
-- Message bubbles
-- Input controls
-- Welcome screen
-- Toast notifications
+See **`.env.example`**, **`docs/DATABASE.md`**, **`docs/TECH_STACK.md`**, **`docs/PIPELINE.md`**, and **`docs/DESIGN.md`** (role dashboards, mic UX, responsive notes).
 
-### JavaScript Files
+## Docker (deployment-ready)
 
-**main.js** (Core Utilities)
-- `ThemeManager` - Theme switching with smooth transitions
-- `Toast` - Notification system
-- `Utils` - Helper functions (debounce, scroll, etc.)
+**SQLite inside the container** (quick demo):
 
-**auth.js** (Authentication)
-- `togglePassword()` - Password visibility
-- `checkPasswordStrength()` - Password strength meter
-- `handleLogin()` - Login form submission
-- `handleSignup()` - Signup form submission
-- `loginWithGoogle/Facebook()` - Social auth
-- `selectUserType()` - User type selection
-
-**dashboard.js** (Dashboard)
-- `switchMode()` - Toggle Hearing/Deaf mode
-- `handleInput()` - Microphone/camera controls
-- `addUserMessage()` - Display user messages
-- `addAssistantMessage()` - Display AI responses
-- `togglePin()` - Pin/unpin conversations
-- `deleteChat()` - Delete conversations
-- `exampleHearing/Deaf()` - Demo interactions
-
----
-
-## 🎯 Backend Integration (Python)
-
-### Recommended Structure
-
-```
-voice2sign_backend/
-├── app.py                  # Flask/FastAPI main app
-├── api/
-│   ├── auth.py            # Authentication endpoints
-│   ├── translation.py     # Translation endpoints
-│   └── user.py            # User management endpoints
-├── models/
-│   ├── user.py            # User model
-│   └── conversation.py    # Conversation model
-├── services/
-│   ├── speech_to_text.py  # Whisper API integration
-│   ├── sign_recognition.py # MediaPipe/TensorFlow
-│   └── text_to_sign.py    # Sign generation
-├── utils/
-│   └── helpers.py
-└── requirements.txt
+```bash
+docker build -t voice2sign .
+docker run -p 8000:8000 -e V2S_SECRET=your-secret voice2sign
 ```
 
-### API Endpoints to Create
+Open **http://127.0.0.1:8000/**.
 
-```python
-# Authentication
-POST /api/auth/login
-POST /api/auth/signup
-POST /api/auth/logout
-POST /api/auth/social (Google/Facebook OAuth)
+**PostgreSQL** (example compose file included):
 
-# Translation
-POST /api/translate/speech-to-sign
-POST /api/translate/sign-to-text
-GET  /api/translate/history
-
-# User
-GET  /api/user/profile
-PUT  /api/user/profile
-GET  /api/user/conversations
-POST /api/user/conversations/:id/pin
-DELETE /api/user/conversations/:id
+```bash
+docker compose up --build
 ```
 
-### Frontend Integration Points
+App listens on **8000**; Postgres is wired via `DATABASE_URL` in `docker-compose.yml`.
 
-**In `auth.js`:**
-```javascript
-// Change this:
-setTimeout(() => {
-    window.location.href = 'dashboard.html';
-}, 1200);
+## Production checklist
 
-// To this:
-fetch('/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
-})
-.then(response => response.json())
-.then(data => {
-    if (data.success) {
-        localStorage.setItem('token', data.token);
-        window.location.href = 'dashboard.html';
-    }
-});
-```
+1. **venv or container** with pinned `requirements.txt`.
+2. **`V2S_SECRET`** and **`DATABASE_URL`** via environment (not files in `public/`).
+3. **HTTPS** at the reverse proxy; set **`CORS_ORIGINS`** to your site only.
+4. **Persist** SQLite volume or use PostgreSQL with backups.
+5. Optional: **Gunicorn** + Uvicorn workers, e.g.  
+   `gunicorn server.app:app -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8000`
 
-**In `dashboard.js`:**
-```javascript
-// Add API calls for translation
-async function translateSpeechToSign(audioBlob) {
-    const formData = new FormData();
-    formData.append('audio', audioBlob);
-    
-    const response = await fetch('/api/translate/speech-to-sign', {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: formData
-    });
-    
-    return await response.json();
-}
-```
+## Step-by-Step Implementation Guides
 
----
+### 1. Email Integration (Password Reset)
+The backend is already prepared with an `smtplib` implementation snippet inside the `/api/auth/forgot-password` route in `server/app.py`. To activate it:
+1. **Update `server/app.py`:** Go to line ~190 in `server/app.py` and remove the multi-line string quotes (`"""`) wrapped around the email sending code.
+2. **Generate an App Password:** If using Gmail, go to your Google Account -> Security -> 2-Step Verification -> App Passwords and generate a new password. Do not use your actual account password.
+3. **Set Environment Variables:** Add your credentials to your `.env` file:
+   ```env
+   SMTP_USER=your-email@gmail.com
+   SMTP_PASS=your-generated-app-password
+   ```
+4. **Restart the Server:** Your `/api/auth/forgot-password` endpoint will now fire actual emails containing the reset link token.
 
-## 🛠️ Configuration
+### 2. MySQL Database Integration
+The app currently falls back to a local SQLite file (`voice2sign.db`) if it cannot connect to MySQL. To properly connect to MySQL Workbench:
+1. **Install MySQL & Workbench:** Ensure your MySQL service (e.g., via XAMPP, WAMP, or standalone) is installed and running on port `3306`.
+2. **Create the Database:** Open MySQL Workbench and run `CREATE DATABASE hotel_management;` (or whichever database name you prefer).
+3. **Set Environment Variables:** In your `.env` file, define the connection details:
+   ```env
+   MYSQL_HOST=localhost
+   MYSQL_USER=root
+   MYSQL_PASSWORD=your_password_here
+   MYSQL_DB=hotel_management
+   ```
+4. **Sync Schema:** Restart the FastAPI backend (`python app.py`). SQLAlchemy will automatically detect the database and create all necessary tables (`users`, `chats`, `messages`, `preferences`).
 
-### Theme Transition Speed
+### 3. Required APIs & Integrations for Full Functionality
+To convert the current UI into a fully working, production-ready system, you will need to integrate the following external APIs and Machine Learning models into the `server/app.py` pipeline routes:
 
-Edit in `css/main.css`:
-```css
-:root {
-    --theme-transition-duration: 0.4s;  /* Change to 0.2s for faster, 0.6s for slower */
-}
-```
+#### A. Voice $\rightarrow$ Sign Translation Pipeline
+1. **Speech-to-Text (Transcribing Voice)**
+   - **Recommendation:** **OpenAI Whisper API** (Fastest, highest accuracy) or Google Cloud Speech-to-Text.
+   - **Local Alternative:** Run `whisper` locally on a GPU.
+2. **Text-to-Sign (Visualizing Signs)**
+   - **Recommendation:** You will need an API that maps English text to Sign Language Glosses, and then plays back 3D avatar animations or stitches pre-recorded video clips. Companies like **Signum** or custom **WebGL/Unity Avatar** integrations are standard here.
 
-### Color Customization
+#### B. Sign $\rightarrow$ Voice Translation Pipeline
+1. **Computer Vision (Recognizing Signs)**
+   - **Recommendation:** Connect the webcam frame stream to **Google MediaPipe** (for hand/pose tracking keypoints) fed into a custom trained LSTM/Transformer model (like TensorFlow/PyTorch) that translates hand movements into english words.
+2. **Text-to-Speech (Speaking the Translation out loud)**
+   - **Recommendation:** **ElevenLabs API** (for highly realistic, natural voices) or Google Cloud TTS. 
+   - **Local Alternative:** `pyttsx3` or `Coqui TTS`.
 
-Edit in `css/main.css`:
-```css
-:root {
-    --accent: #D4A574;  /* Change to your accent color */
-    --accent-hover: #C89563;
-    --accent-light: #F5EDE4;
-}
-```
+#### C. Monetization & Infrastructure
+1. **Payment Gateway (For Subscriptions)**
+   - **Recommendation:** **Stripe API**. You will need to build Stripe Checkout webhooks into FastAPI to upgrade user tiers in the database automatically when they successfully pay.
+2. **Cloud Storage (For Pro User File Uploads)**
+   - **Recommendation:** **AWS S3** or **Cloudinary**. Do not store large user images or files directly on your server disk; use S3 buckets and save the URLs in your database.
+3. **Email Provider (For Password Resets)**
+   - **Recommendation:** **SendGrid**, **Mailgun**, or **AWS SES**. While `smtplib` via a Gmail App Password works well for testing, production apps should use dedicated email APIs to prevent reset emails from going to Spam folders.
 
-### Font Customization
+### 4. Final Deployment Recommendations & Step-by-Step Guides
+Before deploying Voice2Sign to a live Linux server (e.g., Ubuntu on AWS EC2 or DigitalOcean), ensure the following furnishings are complete.
 
-Edit in HTML `<head>`:
-```html
-<!-- Change Work Sans to another font -->
-<link href="https://fonts.googleapis.com/css2?family=Your+Font:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-```
+#### 1. Change the Secret Key
+You must secure your JWT tokens so users cannot forge admin accounts.
+1. Open your terminal or command prompt.
+2. Run `python -c "import secrets; print(secrets.token_hex(32))"` to generate a completely random, secure 64-character string.
+3. Open your `.env` file on the server.
+4. Replace the old key with the new one: `V2S_SECRET=your_new_random_string_here`.
+5. Restart your FastAPI server.
 
-Then update in `css/main.css`:
-```css
-body {
-    font-family: 'Your Font', sans-serif;
-}
-```
+#### 2. Set Up a Reverse Proxy (HTTPS with NGINX)
+Because the app uses `navigator.mediaDevices.getUserMedia()` for the webcam and microphone, modern browsers **strictly require HTTPS**. If you serve this over HTTP, the browser will block the camera entirely.
+1. Map your domain (e.g., `app.yourdomain.com`) to your server's IP address using your DNS provider.
+2. Install NGINX: `sudo apt update && sudo apt install nginx`.
+3. Create a configuration file: `sudo nano /etc/nginx/sites-available/voice2sign` and paste this block:
+   ```nginx
+   server {
+       server_name app.yourdomain.com;
+       location / {
+           proxy_pass http://127.0.0.1:5000; # Forward requests to your local Python server
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+       }
+   }
+   ```
+4. Enable the site: `sudo ln -s /etc/nginx/sites-available/voice2sign /etc/nginx/sites-enabled/` and restart NGINX: `sudo systemctl restart nginx`.
+5. Install Certbot to get a free SSL certificate: `sudo apt install certbot python3-certbot-nginx`.
+6. Run Certbot to automatically configure HTTPS: `sudo certbot --nginx -d app.yourdomain.com`.
 
----
+#### 3. Run with Gunicorn (Production Server)
+Running `python app.py` directly is fine for testing, but in production, it will crash under heavy traffic. You need Gunicorn to manage multiple workers.
+1. Ensure your virtual environment is activated and install Gunicorn: `pip install gunicorn uvicorn`.
+2. Create a Systemd service to run your app in the background permanently: `sudo nano /etc/systemd/system/voice2sign.service`
+3. Paste the following configuration (update `/path/to/` with your actual directory):
+   ```ini
+   [Unit]
+   Description=Gunicorn process for Voice2Sign
+   After=network.target
 
-## 📱 Responsive Design
+   [Service]
+   User=ubuntu
+   Group=www-data
+   WorkingDirectory=/path/to/voice2sign
+   Environment="PATH=/path/to/voice2sign/.venv/bin"
+   ExecStart=/path/to/voice2sign/.venv/bin/gunicorn server.app:app -w 4 -k uvicorn.workers.UvicornWorker -b 127.0.0.1:5000
 
-All pages are fully responsive:
+   [Install]
+   WantedBy=multi-user.target
+   ```
+4. Enable and start the service: 
+   - `sudo systemctl daemon-reload`
+   - `sudo systemctl enable voice2sign`
+   - `sudo systemctl start voice2sign`
 
-- **Desktop** (1024px+): Full split layouts, sidebar visible
-- **Tablet** (640-1024px): Stacked layouts, adjusted spacing
-- **Mobile** (<640px): Single column, overlay sidebar, larger touch targets
+#### 4. Implement a Task Queue (Redis + Celery)
+If you decide to run heavy machine learning models (like Whisper or MediaPipe) locally on your own server instead of using APIs, you must push that heavy processing to the background so your web server doesn't freeze the UI for other users.
+1. Install Redis on your server: `sudo apt install redis-server`.
+2. Start Redis: `sudo systemctl enable redis-server && sudo systemctl start redis-server`.
+3. Install Celery in your python environment: `pip install celery redis`.
+4. Create a `celery_app.py` wrapper file in your `server/` directory:
+   ```python
+   from celery import Celery
+   celery = Celery('voice2sign', broker='redis://localhost:6379/0', backend='redis://localhost:6379/0')
 
----
+   @celery.task
+   def process_video_frame_job(frame_data):
+       # Put your heavy MediaPipe / translation logic here!
+       return "Translated Text"
+   ```
+5. In your `server/app.py`, instead of processing the frame directly, you push it to the queue: `process_video_frame_job.delay(req.image_base64)`.
+6. Run the Celery worker in a separate terminal or as another Systemd service: `celery -A server.celery_app worker --loglevel=info`.
 
-## ♿ Accessibility Features
+## Security model (browser)
 
-- ✅ Proper semantic HTML
-- ✅ ARIA labels on interactive elements
-- ✅ Keyboard navigation support
-- ✅ Focus indicators
-- ✅ Color contrast WCAG AAA compliant
-- ✅ Screen reader compatible
+- No user-editable API/WebSocket URLs — same-origin **`fetch("/api/...")`** only.
+- JWT in `localStorage` is convenient for demos; production often prefers **httpOnly cookies** + HTTPS.
 
----
+## Camera and microphone
 
-## 🔍 Browser Support
+- **localhost** / **127.0.0.1:** HTTP is usually allowed for getUserMedia.
+- **Other hosts:** serve the app over **HTTPS**.
 
-- ✅ Chrome 90+
-- ✅ Firefox 88+
-- ✅ Safari 14+
-- ✅ Edge 90+
+## License
 
----
-
-## 📝 To-Do List
-
-### Frontend
-- [ ] Create `signup.html` (similar to index.html)
-- [ ] Create `css/signup.css`
-- [ ] Add settings page
-- [ ] Add profile page
-- [ ] Add password strength indicator styles
-- [ ] Add loading states for all async actions
-
-### Backend (Python)
-- [ ] Set up Flask/FastAPI server
-- [ ] Create authentication endpoints
-- [ ] Integrate Whisper API (speech-to-text)
-- [ ] Integrate MediaPipe (sign recognition)
-- [ ] Create sign language generation API
-- [ ] Set up database (PostgreSQL/MongoDB)
-- [ ] Add session management
-- [ ] Add rate limiting
-- [ ] Add CORS headers
-
-### DevOps
-- [ ] Set up environment variables
-- [ ] Create Docker containers
-- [ ] Set up CI/CD pipeline
-- [ ] Configure HTTPS/SSL
-- [ ] Set up error logging
-- [ ] Add analytics
-
----
-
-## 🎓 Development Tips
-
-### Testing Theme Transitions
-
-1. Open browser DevTools (F12)
-2. Open `css/main.css`
-3. Change `--theme-transition-duration` value
-4. Toggle theme to see effect
-5. Experiment with different timing functions
-
-### Adding New Pages
-
-1. Copy `index.html` structure
-2. Create new CSS file in `css/`
-3. Link CSS in HTML `<head>`
-4. Create corresponding JS file if needed
-5. Follow existing naming conventions
-
-### Debugging
-
-**Theme Issues:**
-- Check `data-theme` attribute on `<html>`
-- Verify CSS variables are defined
-- Check browser console for errors
-
-**JavaScript Issues:**
-- Check browser console (F12 → Console)
-- Ensure scripts are loaded in correct order
-- Verify function names match HTML `onclick` attributes
-
----
-
-## 📞 Support
-
-For issues or questions:
-1. Check browser console for errors
-2. Verify all files are in correct locations
-3. Ensure file paths are correct
-4. Test in different browsers
-
----
-
-## 📄 License
-
-This project is part of a capstone project.
-
----
-
-**Version**: 1.0  
-**Last Updated**: March 2026  
-**Status**: Ready for Backend Integration
+See repository owner for license terms.
