@@ -7,7 +7,7 @@
     <title>Voice2Sign — Guest Dashboard</title>
     <meta name="description" content="Voice2Sign — Welcome. Try the demo flows without an account.">
     <link rel="icon" type="image/png" href="../images/transparent-logo.svg">
-    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/styles.css?v=20250612">
     <link rel="stylesheet" href="../css/dashboard-hearing.css">
 </head>
 
@@ -142,33 +142,81 @@
                         <div class="pipeline-step pipeline-step--out"><span class="pipeline-step-num">5</span><span
                                 class="pipeline-step-label">Sound</span></div>
                     </div>
-                    <p class="pipeline-limitation"><strong>Limitation:</strong> English hand signs only <span
-                            class="pipeline-hint">— wire Tesseract / Cloud Vision in the API when ready.</span></p>
+                    <p class="pipeline-limitation"><strong>Supported signs:</strong> Yes, Hello, Help, Please, Sorry, I love you, Water, Stop, No, and fingerspelling A, B, I, L, O, V, W, Y <span
+                            class="pipeline-hint">— hold signs clearly facing the camera.</span></p>
 
-                    <div class="pipeline-grid">
-                        <div class="pipeline-media-card">
+                    <div class="pipeline-grid pipeline-grid--sign-live">
+                        <div class="pipeline-media-card pipeline-media-card--camera">
                             <div class="pipeline-media-head">
                                 <span class="camera-dot" id="svCameraDot"></span>
+                                <span class="live-dot" id="svLiveDot" title="Live translation"></span>
                                 <span>Live camera</span>
+                                <span class="pipeline-hand-badge" id="signVoiceHandBadge">No hand in frame</span>
                                 <button type="button" class="pipeline-btn-secondary"
                                     onclick="pipelineToggleCamera()">Toggle camera</button>
                             </div>
-                            <video id="signVoiceVideo" class="pipeline-video" playsinline muted autoplay></video>
-                            <canvas id="signVoiceCanvas" class="pipeline-canvas-hidden" width="640" height="480"
-                                hidden></canvas>
+                            <div class="pipeline-video-wrap">
+                                <video id="signVoiceVideo" class="pipeline-video pipeline-video--large" playsinline muted autoplay></video>
+                            </div>
+                            <canvas id="signVoiceCanvas" class="pipeline-canvas-hidden" width="640" height="480"></canvas>
                             <div class="pipeline-actions">
-                                <button type="button" class="pipeline-btn-primary"
-                                    onclick="pipelineSignVoiceRecognize()">Capture &amp; recognize</button>
                                 <button type="button" class="pipeline-btn-primary" onclick="pipelineSignVoiceSpeak()"
-                                    id="btnSignSpeak">Speak text (TTS)</button>
+                                    id="btnSignSpeak">Speak again (TTS)</button>
+                            </div>
+                            <div class="pipeline-settings-panel">
+                                <div class="pipeline-settings-panel__head">
+                                    <span class="pipeline-settings-panel__title">Automatic options</span>
+                                    <span class="pipeline-api-pill" id="signVoiceApiStatus">Checking server…</span>
+                                </div>
+                                <ul class="pipeline-setting-list">
+                                    <li class="pipeline-setting-row">
+                                        <div class="pipeline-setting-copy">
+                                            <span class="pipeline-setting-title">Live translation</span>
+                                            <span class="pipeline-setting-desc">Recognize signs continuously</span>
+                                        </div>
+                                        <label class="pipeline-switch">
+                                            <input type="checkbox" id="signVoiceLiveMode" checked onchange="pipelineToggleLiveSignMode()">
+                                            <span class="pipeline-switch-track" aria-hidden="true"></span>
+                                        </label>
+                                    </li>
+                                    <li class="pipeline-setting-row">
+                                        <div class="pipeline-setting-copy">
+                                            <span class="pipeline-setting-title">Auto voice</span>
+                                            <span class="pipeline-setting-desc">Speak each translation aloud</span>
+                                        </div>
+                                        <label class="pipeline-switch">
+                                            <input type="checkbox" id="signVoiceAutoSpeak" checked>
+                                            <span class="pipeline-switch-track" aria-hidden="true"></span>
+                                        </label>
+                                    </li>
+                                    <li class="pipeline-setting-row">
+                                        <div class="pipeline-setting-copy">
+                                            <span class="pipeline-setting-title">Post to chat</span>
+                                            <span class="pipeline-setting-desc">Send text to Text chat</span>
+                                        </div>
+                                        <label class="pipeline-switch">
+                                            <input type="checkbox" id="signVoiceAddToChat" checked>
+                                            <span class="pipeline-switch-track" aria-hidden="true"></span>
+                                        </label>
+                                    </li>
+                                    <li class="pipeline-setting-row">
+                                        <div class="pipeline-setting-copy">
+                                            <span class="pipeline-setting-title">Build sentence</span>
+                                            <span class="pipeline-setting-desc">Append words together</span>
+                                        </div>
+                                        <label class="pipeline-switch">
+                                            <input type="checkbox" id="signVoiceAppend" checked>
+                                            <span class="pipeline-switch-track" aria-hidden="true"></span>
+                                        </label>
+                                    </li>
+                                </ul>
                             </div>
                         </div>
                         <div class="pipeline-text-card">
                             <label class="pipeline-label" for="signVoiceText">Recognized text</label>
                             <textarea id="signVoiceText" class="pipeline-textarea" rows="6"
-                                placeholder="Recognized text appears here — connect OpenCV + OCR on the server."></textarea>
-                            <p class="pipeline-api-note" id="signVoiceApiNote">API:
-                                <code>POST /api/pipeline/sign-to-voice/recognize</code> · <code>…/speak</code></p>
+                                placeholder="Turn on the camera — signs translate to text automatically. Open Text chat to see messages."></textarea>
+                            <p class="pipeline-api-note" id="signVoiceApiNote">Toggle camera to start live sign → text → voice translation.</p>
                         </div>
                     </div>
                 </div>
@@ -339,7 +387,7 @@
     <script src="../js/app.js"></script>
     <script src="../js/api.js"></script>
     <script src="../js/dashboard-guest.js"></script>
-    <script src="../js/dashboard-shared.js"></script>
+    <script src="../js/dashboard-shared.js?v=20250612"></script>
 
     <!-- Modals -->
     <div id="proModal" class="modal-overlay hidden" onclick="if(event.target===this) closeModals()">

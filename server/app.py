@@ -49,10 +49,11 @@ class PreferencesRequest(BaseModel):
 
 
 class PipelineSignRecognizeRequest(BaseModel):
-    """Frame from webcam — wire OpenCV + OCR (Tesseract / Cloud Vision) later."""
+    """Single frame or multi-frame batch from webcam for MediaPipe sign recognition."""
 
     model_config = ConfigDict(populate_by_name=True)
     image_base64: Optional[str] = Field(None, alias="imageBase64")
+    frames: Optional[list[str]] = Field(None, alias="frames")
 
 
 class PipelineTextPayload(BaseModel):
@@ -375,15 +376,43 @@ def toggle_camera(payload: InputToggleRequest):
 
 # ── ML / pipeline stubs (conceptual diagram flows — integrate OpenCV, Whisper, TTS, SD) ──
 
+def _sign_vision_health() -> dict:
+    """Check local MediaPipe model + vision deps (no external API key required)."""
+    model_path = Path(__file__).resolve().parent.parent / "models" / "hand_landmarker.task"
+    if not model_path.is_file():
+        return {
+            "ready": False,
+            "modelLoaded": False,
+            "message": "Missing models/hand_landmarker.task — run scripts/download_hand_model.ps1",
+        }
+    try:
+        import cv2  # noqa: F401
+        import mediapipe  # noqa: F401
+    except ImportError as exc:
+        return {
+            "ready": False,
+            "modelLoaded": True,
+            "message": f"Vision packages not installed: {exc}. Run: pip install -r requirements.txt",
+        }
+    return {
+        "ready": True,
+        "modelLoaded": True,
+        "message": "Local MediaPipe recognition ready (no external API key needed).",
+    }
+
+
 @app.get("/api/pipeline/status")
 def pipeline_status():
     """Describes the two main flows for the dashboard UI."""
+    vision = _sign_vision_health()
     return {
         "flows": {
             "sign_to_voice": {
                 "steps": ["webcam", "image_recognition", "text", "text_to_voice", "sound"],
-                "integrations": ["OpenCV", "Tesseract OCR / Google Cloud Vision", "pyttsx3", "Coqui TTS"],
-                "limitation": "English hand signs only (per design)",
+                "integrations": ["MediaPipe Hands", "OpenCV", "pyttsx3"],
+                "ready": vision["ready"],
+                "vision": vision,
+                "limitation": "Rule-based ASL fingerspelling + common signs (train a model for full ASL)",
             },
             "voice_to_sign": {
                 "steps": ["voice", "voice_to_text", "text", "text_to_image", "sign_image"],
@@ -395,30 +424,80 @@ def pipeline_status():
 
 @app.post("/api/pipeline/sign-to-voice/recognize")
 def pipeline_sign_to_voice_recognize(req: PipelineSignRecognizeRequest):
-    """
-    Stub: accept a JPEG base64 frame; return empty text until OpenCV + OCR is connected.
-    """
-    has_frame = bool(req.image_base64 and len(req.image_base64) > 50)
-    return {
-        "text": "",
-        "stage": "image_recognition",
-        "ready": False,
-        "receivedFrame": has_frame,
-        "integration": ["OpenCV", "Tesseract OCR", "Google Cloud Vision (optional)"],
-        "message": "Stub: decode imageBase64, run pose/hand ROI + OCR, then return text.",
-    }
+    """Decode webcam JPEG(s), run MediaPipe hand landmarks + sign classifier."""
+    vision = _sign_vision_health()
+    if not vision["ready"]:
+        raise HTTPException(status_code=503, detail=vision["message"])
+
+    try:
+        from .sign_recognition import recognize_sign_from_frame, recognize_sign_from_frames
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"Sign recognition unavailable: {exc}") from exc
+
+    try:
+        batch = [f for f in (req.frames or []) if f and len(f) > 50]
+        if batch:
+            result = recognize_sign_from_frames(batch)
+            result.update(
+                {
+                    "stage": "image_recognition",
+                    "ready": bool(result.get("text")),
+                    "receivedFrames": len(batch),
+                    "integration": ["MediaPipe Hands", "OpenCV"],
+                }
+            )
+            return result
+
+        if not req.image_base64 or len(req.image_base64) < 50:
+            return {
+                "text": "",
+                "confidence": 0,
+                "stage": "image_recognition",
+                "ready": False,
+                "receivedFrame": False,
+                "integration": ["MediaPipe Hands", "OpenCV"],
+                "message": "No frame received — turn on the camera and capture again.",
+            }
+
+        result = recognize_sign_from_frame(req.image_base64)
+        result.update(
+            {
+                "stage": "image_recognition",
+                "ready": bool(result.get("text")),
+                "receivedFrame": True,
+                "integration": ["MediaPipe Hands", "OpenCV"],
+            }
+        )
+        return result
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Recognition failed: {exc}") from exc
 
 
 @app.post("/api/pipeline/sign-to-voice/speak")
 def pipeline_sign_to_voice_speak(req: PipelineTextPayload):
-    """Stub: wire pyttsx3 or Coqui TTS and optionally return audio URL."""
-    return {
-        "text": req.text,
+    """Synthesize speech with pyttsx3; client falls back to browser speechSynthesis."""
+    from .tts_service import synthesize_speech_base64
+
+    text = (req.text or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="No text to speak.")
+
+    audio_base64 = synthesize_speech_base64(text)
+    payload = {
+        "text": text,
         "stage": "text_to_voice",
-        "ready": False,
-        "integration": ["pyttsx3", "Coqui TTS"],
-        "message": "Stub: client may use browser speechSynthesis until server TTS is wired.",
+        "ready": bool(audio_base64),
+        "integration": ["pyttsx3", "browser speechSynthesis"],
     }
+    if audio_base64:
+        payload["audioBase64"] = audio_base64
+        payload["audioMimeType"] = "audio/wav"
+        payload["message"] = "Server TTS audio generated."
+    else:
+        payload["message"] = "Server TTS unavailable — use browser speechSynthesis."
+    return payload
 
 
 @app.post("/api/pipeline/voice-to-sign/transcribe")

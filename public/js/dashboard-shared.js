@@ -440,8 +440,13 @@ function showSection(section) {
         document.querySelector('[data-section="signVoice"]')?.classList.add("active");
         document.getElementById("signVoicePanel")?.classList.add("visible");
         setDashboardTitle("Sign → Voice");
+        if (pipelineSignVoiceStream && pipelineSignVoiceLiveEnabled()) {
+            pipelineStartRealtimeSignTranslation();
+        }
         return;
     }
+
+    pipelineStopRealtimeSignTranslation();
 
     if (section === "voiceSign") {
         mainHeader?.classList.remove("section-hidden");
@@ -890,11 +895,368 @@ function signOutApp() {
 
 let pipelineSignVoiceStream = null;
 let pipelineVoiceSignMicStream = null;
+let pipelineSignRecording = false;
+let pipelineRealtimeActive = false;
+let pipelineRealtimeProcessing = false;
+let pipelineRealtimeCaptureTimer = null;
+let pipelineRealtimeProcessTimer = null;
+let pipelineRealtimeFrames = [];
+let pipelineLastEmittedSign = "";
+let pipelineLastEmitAt = 0;
+
+const PIPELINE_REALTIME_CAPTURE_MS = 80;
+const PIPELINE_REALTIME_PROCESS_MS = 900;
+const PIPELINE_REALTIME_EMIT_COOLDOWN_MS = 2200;
+const PIPELINE_MIN_CONFIDENCE = 0.35;
+
+async function pipelineVerifyVisionBackend() {
+    const pill = document.getElementById("signVoiceApiStatus");
+    if (!pill) return false;
+
+    pill.classList.remove("ok", "error");
+    pill.textContent = "Checking server…";
+
+    try {
+        const res = await ApiClient.pipelineStatus();
+        const vision = res?.flows?.sign_to_voice?.vision;
+        const ready = Boolean(res?.flows?.sign_to_voice?.ready && vision?.ready);
+        if (ready) {
+            pill.textContent = "Server connected · MediaPipe ready";
+            pill.classList.add("ok");
+            return true;
+        }
+        pill.textContent = vision?.message || "Vision pipeline not ready on server";
+        pill.classList.add("error");
+        pipelineSignVoiceStatusNote(vision?.message || "Install vision packages and download the hand model.");
+        return false;
+    } catch (err) {
+        pill.textContent = "Server offline — run: python app.py";
+        pill.classList.add("error");
+        pipelineSignVoiceStatusNote(
+            "Cannot reach the API. Start the server from the voice2sign folder: python app.py — then open http://127.0.0.1:5000 (not a file:// URL)."
+        );
+        return false;
+    }
+}
+
+function pipelineWaitForVideoReady(video, timeoutMs = 4000) {
+    return new Promise((resolve) => {
+        if (!video) {
+            resolve(false);
+            return;
+        }
+        if (video.videoWidth > 0 && video.readyState >= 2) {
+            resolve(true);
+            return;
+        }
+        const done = () => resolve(video.videoWidth > 0 && video.readyState >= 2);
+        video.addEventListener("loadedmetadata", done, { once: true });
+        video.addEventListener("loadeddata", done, { once: true });
+        setTimeout(done, timeoutMs);
+    });
+}
+
+function pipelineBrightenCanvas(ctx, width, height) {
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const pixels = imageData.data;
+    // Measure average brightness using a subset of pixels to be fast
+    let total = 0;
+    const step = 8; // Sample every 8th pixel (64x faster sampling)
+    let samples = 0;
+    for (let i = 0; i < pixels.length; i += 4 * step) {
+        total += (pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3;
+        samples++;
+    }
+    const avgBrightness = samples > 0 ? (total / samples) : 120;
+
+    // Adaptive enhancement based on how dark the frame is
+    let alpha, beta, gamma;
+    if (avgBrightness < 40) {
+        // Extremely dark — maximum boost
+        alpha = 3.0; beta = 90; gamma = 2.5;
+    } else if (avgBrightness < 70) {
+        // Very dark
+        alpha = 2.2; beta = 65; gamma = 2.0;
+    } else if (avgBrightness < 100) {
+        // Dark
+        alpha = 1.7; beta = 45; gamma = 1.5;
+    } else {
+        // Moderate/good lighting — mild boost
+        alpha = 1.3; beta = 20; gamma = 1.1;
+    }
+
+    // Precompute gamma lookup table (LUT) to avoid Math.pow for every pixel
+    const lut = new Uint8Array(256);
+    const invGamma = 1.0 / gamma;
+    for (let val = 0; val < 256; val++) {
+        // Apply linear contrast + brightness
+        const enhanced = Math.min(255, Math.max(0, val * alpha + beta));
+        // Apply gamma correction
+        lut[val] = Math.min(255, 255 * Math.pow(enhanced / 255, invGamma));
+    }
+
+    // Apply LUT to all pixels
+    for (let i = 0; i < pixels.length; i += 4) {
+        pixels[i] = lut[pixels[i]];
+        pixels[i + 1] = lut[pixels[i + 1]];
+        pixels[i + 2] = lut[pixels[i + 2]];
+    }
+    ctx.putImageData(imageData, 0, 0);
+}
+
+function pipelineCaptureFrameBase64() {
+    const video = document.getElementById("signVoiceVideo");
+    const canvas = document.getElementById("signVoiceCanvas");
+    if (!video?.srcObject || !canvas) return "";
+    if (!video.videoWidth || video.readyState < 2) return "";
+
+    const ctx = canvas.getContext("2d");
+    const w = video.videoWidth;
+    const h = video.videoHeight;
+    canvas.width = w;
+    canvas.height = h;
+    ctx.drawImage(video, 0, 0, w, h);
+    // Send raw frame to server to preserve contrast. Server handles image enhancement.
+    // pipelineBrightenCanvas(ctx, w, h);
+    return canvas.toDataURL("image/jpeg", 0.92).split(",")[1] || "";
+}
+
+function pipelineUpdateHandTrackingBadge(handsDetected) {
+    const badge = document.getElementById("signVoiceHandBadge");
+    if (!badge) return;
+    const count = Number(handsDetected) || 0;
+    if (count > 0) {
+        badge.textContent = `${count} hand${count === 1 ? "" : "s"} tracked`;
+        badge.classList.add("active");
+    } else {
+        badge.textContent = "No hand in frame";
+        badge.classList.remove("active");
+    }
+}
+
+function pipelineSignVoiceShouldAppend() {
+    const el = document.getElementById("signVoiceAppend");
+    return el ? el.checked : true;
+}
+
+function pipelineSignVoiceShouldAutoSpeak() {
+    const el = document.getElementById("signVoiceAutoSpeak");
+    return el ? el.checked : true;
+}
+
+function pipelineSignVoiceShouldAddToChat() {
+    const el = document.getElementById("signVoiceAddToChat");
+    return el ? el.checked : true;
+}
+
+function pipelineSignVoiceLiveEnabled() {
+    const el = document.getElementById("signVoiceLiveMode");
+    return el ? el.checked : true;
+}
+
+function pipelineSignVoiceStatusNote(message) {
+    const note = document.getElementById("signVoiceApiNote");
+    if (note) note.textContent = message;
+}
+
+function pipelineApplyRecognizeResult(res, ta, note) {
+    const text = (res?.text || "").trim();
+    const confidence = typeof res.confidence === "number" ? Math.round(res.confidence * 100) : null;
+
+    if (note) {
+        const parts = [];
+        if (pipelineRealtimeActive) parts.push("Live");
+        if (text && confidence !== null) parts.push(`${confidence}% confidence`);
+        if (res.message) parts.push(String(res.message));
+        if (res.handsDetected != null) parts.push(`${res.handsDetected} hand(s) detected`);
+        note.textContent = parts.length ? parts.join(" · ") : "Hold a clear sign in front of the camera.";
+    }
+    pipelineUpdateHandTrackingBadge(res?.handsDetected);
+
+    if (!ta) return text;
+
+    if (text) {
+        if (pipelineSignVoiceShouldAppend()) {
+            const current = ta.value.trim();
+            if (!current) ta.value = text;
+            else if (!current.endsWith(text)) ta.value = `${current} ${text}`;
+        } else {
+            ta.value = text;
+        }
+    }
+    return text;
+}
+
+async function pipelinePostSignTranslationToChat(text) {
+    const cleaned = (text || "").trim();
+    if (!cleaned) return;
+
+    const display = `🖐️ ${cleaned}`;
+    removeWelcome();
+    addMessage("user", display);
+
+    if (!currentChatId && ApiClient.isLoggedIn()) {
+        try {
+            const res = await ApiClient.createChat(`Sign: ${cleaned.substring(0, 36)}`);
+            if (res?.chat) {
+                currentChatId = res.chat.id;
+                addConversationToList(res.chat);
+            }
+        } catch (e) {
+            console.warn("Could not create chat for sign:", e);
+        }
+    }
+
+    if (currentChatId && ApiClient.isLoggedIn()) {
+        try {
+            const res = await ApiClient.sendMessage(currentChatId, `[Sign] ${cleaned}`);
+            if (res?.assistantMessage) {
+                addMessage("assistant", res.assistantMessage.content);
+            }
+        } catch (e) {
+            addMessage("assistant", `I understood your sign as "${cleaned}".`);
+        }
+    } else {
+        setTimeout(
+            () =>
+                addMessage(
+                    "assistant",
+                    `Sign recognized: "${cleaned}" — text and voice sent for the hearing person.`
+                ),
+            450
+        );
+    }
+}
+
+async function pipelineEmitSignTranslation(text, res) {
+    const cleaned = (text || "").trim();
+    if (!cleaned) return;
+
+    const now = Date.now();
+    const confidence = typeof res?.confidence === "number" ? res.confidence : 0;
+    if (confidence < PIPELINE_MIN_CONFIDENCE) return;
+
+    const isNew = cleaned !== pipelineLastEmittedSign;
+    const cooledDown = now - pipelineLastEmitAt >= PIPELINE_REALTIME_EMIT_COOLDOWN_MS;
+    if (!isNew || !cooledDown) return;
+
+    pipelineLastEmittedSign = cleaned;
+    pipelineLastEmitAt = now;
+
+    if (pipelineSignVoiceShouldAutoSpeak()) {
+        await pipelineSignVoiceSpeak(cleaned);
+    }
+    if (pipelineSignVoiceShouldAddToChat()) {
+        await pipelinePostSignTranslationToChat(cleaned);
+    }
+}
+
+function pipelineStartRealtimeSignTranslation() {
+    if (pipelineRealtimeActive) return;
+    const video = document.getElementById("signVoiceVideo");
+    if (!video?.srcObject || !pipelineSignVoiceLiveEnabled()) return;
+
+    pipelineRealtimeActive = true;
+    pipelineRealtimeFrames = [];
+    pipelineLastEmittedSign = "";
+    pipelineLastEmitAt = 0;
+
+    const liveDot = document.getElementById("svLiveDot");
+    liveDot?.classList.add("live");
+
+    pipelineRealtimeCaptureTimer = setInterval(() => {
+        const frame = pipelineCaptureFrameBase64();
+        if (!frame) return;
+        pipelineRealtimeFrames.push(frame);
+        if (pipelineRealtimeFrames.length > 15) pipelineRealtimeFrames.shift();
+    }, PIPELINE_REALTIME_CAPTURE_MS);
+
+    pipelineRealtimeProcessTimer = setInterval(() => {
+        pipelineProcessRealtimeBatch();
+    }, PIPELINE_REALTIME_PROCESS_MS);
+
+    pipelineSignVoiceStatusNote("Live translation active — sign naturally; text, voice, and chat update automatically.");
+    setTimeout(() => pipelineProcessRealtimeBatch(), 400);
+}
+
+function pipelineStopRealtimeSignTranslation() {
+    pipelineRealtimeActive = false;
+    if (pipelineRealtimeCaptureTimer) clearInterval(pipelineRealtimeCaptureTimer);
+    if (pipelineRealtimeProcessTimer) clearInterval(pipelineRealtimeProcessTimer);
+    pipelineRealtimeCaptureTimer = null;
+    pipelineRealtimeProcessTimer = null;
+    pipelineRealtimeFrames = [];
+    pipelineRealtimeProcessing = false;
+
+    const liveDot = document.getElementById("svLiveDot");
+    liveDot?.classList.remove("live");
+}
+
+async function pipelineProcessRealtimeBatch() {
+    if (!pipelineRealtimeActive || pipelineSignRecording || pipelineRealtimeProcessing) return;
+    const frames = pipelineRealtimeFrames.slice(-12);
+    if (frames.length < 3) return;
+
+    pipelineRealtimeProcessing = true;
+    const ta = document.getElementById("signVoiceText");
+    const note = document.getElementById("signVoiceApiNote");
+
+    try {
+        const res = await ApiClient.pipelineSignRecognize({ frames });
+        const text = pipelineApplyRecognizeResult(res, ta, note);
+        if (text) {
+            await pipelineEmitSignTranslation(text, res);
+        }
+    } catch (err) {
+        const msg = err?.message || String(err);
+        console.warn("Live sign recognition:", err);
+        pipelineSignVoiceStatusNote(`Recognition error: ${msg}`);
+        const pill = document.getElementById("signVoiceApiStatus");
+        if (pill) {
+            pill.textContent = "Server error — see note below";
+            pill.classList.remove("ok");
+            pill.classList.add("error");
+        }
+    } finally {
+        pipelineRealtimeProcessing = false;
+    }
+}
+
+function pipelineToggleLiveSignMode() {
+    if (pipelineSignVoiceLiveEnabled()) {
+        pipelineStartRealtimeSignTranslation();
+        Toast.success("Live translation on.");
+    } else {
+        pipelineStopRealtimeSignTranslation();
+        pipelineSignVoiceStatusNote("Live translation paused — turn it on to translate signs automatically.");
+        Toast.info("Live translation paused.");
+    }
+}
+
+async function pipelinePlaySignVoiceTts(res, text) {
+    const spoken = (text || "").trim();
+    if (!spoken) return;
+
+    if (res?.audioBase64) {
+        const mime = res.audioMimeType || "audio/wav";
+        const audio = new Audio(`data:${mime};base64,${res.audioBase64}`);
+        await audio.play();
+        return;
+    }
+
+    if ("speechSynthesis" in window) {
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(spoken);
+        u.lang = "en-US";
+        speechSynthesis.speak(u);
+    }
+}
 
 async function pipelineToggleCamera() {
     const video = document.getElementById("signVoiceVideo");
     const dot = document.getElementById("svCameraDot");
     if (pipelineSignVoiceStream) {
+        pipelineStopRealtimeSignTranslation();
         pipelineSignVoiceStream.getTracks().forEach((t) => t.stop());
         pipelineSignVoiceStream = null;
         if (video) video.srcObject = null;
@@ -907,9 +1269,20 @@ async function pipelineToggleCamera() {
             video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
             audio: false,
         });
-        if (video) video.srcObject = pipelineSignVoiceStream;
+        if (video) {
+            video.srcObject = pipelineSignVoiceStream;
+            await pipelineWaitForVideoReady(video);
+        }
         dot?.classList.add("live");
-        Toast.success("Camera on — frames go to OpenCV / OCR when wired.");
+        const backendOk = await pipelineVerifyVisionBackend();
+        if (!backendOk) {
+            Toast.error("Server or MediaPipe not ready — see status under Automatic options.");
+        } else {
+            Toast.success("Camera on — live sign translation starting…");
+        }
+        if (pipelineSignVoiceStream && pipelineSignVoiceLiveEnabled() && backendOk) {
+            pipelineStartRealtimeSignTranslation();
+        }
     } catch (e) {
         Toast.error("Camera unavailable. Allow permission or use HTTPS.");
     }
@@ -938,53 +1311,98 @@ async function pipelineToggleMic() {
 
 async function pipelineSignVoiceRecognize() {
     const video = document.getElementById("signVoiceVideo");
-    const canvas = document.getElementById("signVoiceCanvas");
     const ta = document.getElementById("signVoiceText");
     const note = document.getElementById("signVoiceApiNote");
-    if (!video?.srcObject || !canvas) {
+    if (!video?.srcObject) {
         Toast.warning("Turn on the camera first.");
         return;
     }
-    const ctx = canvas.getContext("2d");
-    const w = video.videoWidth || 640;
-    const h = video.videoHeight || 480;
-    canvas.width = w;
-    canvas.height = h;
-    ctx.drawImage(video, 0, 0, w, h);
-    const imageBase64 = canvas.toDataURL("image/jpeg", 0.85).split(",")[1] || "";
+    const imageBase64 = pipelineCaptureFrameBase64();
+    if (!imageBase64) {
+        Toast.warning("Could not capture a frame — wait for the video to load.");
+        return;
+    }
 
     try {
         const res = await ApiClient.pipelineSignRecognize({ imageBase64 });
-        if (note) {
-            note.textContent = res.message
-                ? String(res.message)
-                : "Stub: connect OpenCV + Tesseract / Cloud Vision on the server.";
+        const text = pipelineApplyRecognizeResult(res, ta, note);
+        if (text) {
+            Toast.success(`Recognized: ${text}`);
+            await pipelineEmitSignTranslation(text, res);
+        } else {
+            Toast.info(res.message || "No sign recognized — try Yes, Hello, or fingerspell A–Z.");
         }
-        if (ta) {
-            ta.value = res.text || `[Stub] No OCR yet — ${res.integration?.join(", ") || "see /api/pipeline"}`;
-        }
-        Toast.info("Recognize request sent (stub).");
     } catch (err) {
         Toast.error(err.message || String(err));
     }
 }
 
-async function pipelineSignVoiceSpeak() {
+async function pipelineSignVoiceRecordSequence() {
+    const video = document.getElementById("signVoiceVideo");
     const ta = document.getElementById("signVoiceText");
-    const text = (ta?.value || "").trim();
+    const note = document.getElementById("signVoiceApiNote");
+    const btn = document.getElementById("btnSignRecord");
+
+    if (!video?.srcObject) {
+        Toast.warning("Turn on the camera first.");
+        return;
+    }
+    if (pipelineSignRecording) return;
+
+    pipelineSignRecording = true;
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Recording…";
+    }
+    Toast.info("Hold your sign steady for 1.5 seconds…");
+
+    const frames = [];
+    const captureMs = 1500;
+    const intervalMs = 100;
+    const started = performance.now();
+
+    await new Promise((resolve) => {
+        const timer = setInterval(() => {
+            const frame = pipelineCaptureFrameBase64();
+            if (frame) frames.push(frame);
+            if (performance.now() - started >= captureMs) {
+                clearInterval(timer);
+                resolve();
+            }
+        }, intervalMs);
+    });
+
+    try {
+        const res = await ApiClient.pipelineSignRecognize({ frames });
+        const text = pipelineApplyRecognizeResult(res, ta, note);
+        if (text) {
+            Toast.success(`Recognized: ${text}`);
+            await pipelineEmitSignTranslation(text, res);
+        } else {
+            Toast.info(res.message || "No sign recognized across frames.");
+        }
+    } catch (err) {
+        Toast.error(err.message || String(err));
+    } finally {
+        pipelineSignRecording = false;
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = "Record sign (1.5s)";
+        }
+    }
+}
+
+async function pipelineSignVoiceSpeak(explicitText) {
+    const ta = document.getElementById("signVoiceText");
+    const text = (explicitText || ta?.value || "").trim();
     if (!text) {
         Toast.warning("No text to speak.");
         return;
     }
     try {
-        await ApiClient.pipelineSignSpeak({ text });
-        if ("speechSynthesis" in window) {
-            speechSynthesis.cancel();
-            const u = new SpeechSynthesisUtterance(text);
-            u.lang = "en-US";
-            speechSynthesis.speak(u);
-        }
-        Toast.success("Speaking (browser demo). Replace with pyttsx3 / Coqui on server.");
+        const res = await ApiClient.pipelineSignSpeak({ text });
+        await pipelinePlaySignVoiceTts(res, text);
+        Toast.success(res.ready ? "Speaking (server TTS)." : "Speaking (browser voice).");
     } catch (err) {
         Toast.error(err.message || String(err));
     }
@@ -1038,6 +1456,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     await enforceDashboardRole(cfg.role);
     applyDashboardPageConfig(cfg);
     showSection(cfg.defaultSection);
+    pipelineVerifyVisionBackend();
+
+    if (cfg.role === "deaf" && cfg.defaultSection === "signVoice") {
+        setTimeout(() => pipelineToggleCamera(), 900);
+    }
 
     // Sidebar state
     document.getElementById("sidebar")?.classList.toggle("collapsed", sidebarCollapsed);
