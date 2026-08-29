@@ -1,5 +1,5 @@
 """
-Voice2Sign — single entry point (run after activating your venv):
+Voice Ver Sign — single entry point (run after activating your venv):
 
     python app.py
 

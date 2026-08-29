@@ -1,7 +1,3 @@
-# Optional: computer vision (server-side), e.g. frame processing alongside the web app.
-# Install: pip install -r requirements-vision.txt
-# Then download model: powershell -File scripts/download_hand_model.ps1
-opencv-python-headless==4.10.0.84
-mediapipe>=0.10.14
-numpy>=1.24.0
-pyttsx3>=2.90
+# Requirements for Computer Vision are deprecated.
+# Voice Ver Sign uses cloud-based multimodal APIs (e.g. Gemini API, WebSockets) and client-side processing,
+# removing the need for server-side opencv, mediapipe, or local offline TTS.

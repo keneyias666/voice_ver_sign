@@ -5,7 +5,7 @@ A voice-to-sign language web app: **HTML/CSS/JS** in `public/` and **FastAPI** i
 ## Project structure
 
 ```
-voice2sign/
+voice_ver_sign/
 ├── app.py                  # **Single entry:** loads .env, runs uvicorn (port 5000 by default)
 ├── requirements.txt
 ├── server/
@@ -26,7 +26,7 @@ voice2sign/
 
 - **Setup**: `scripts/setup.ps1` or `scripts/setup.sh` (creates venv + installs deps).
 - **Start app**: `python app.py` → `http://127.0.0.1:5000/`
-- **Database**: SQLite at `data/voice2sign.db` by default, or `DATABASE_URL` for MySQL/PostgreSQL.
+- **Database**: SQLite at `data/voice_ver_sign.db` by default, or `DATABASE_URL` for MySQL/PostgreSQL.
 - **Health**: `GET /api/health`
 
 ## Deployment

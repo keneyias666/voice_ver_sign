@@ -43,9 +43,9 @@ def get_engine() -> Engine:
                 print(f"\n--- DATABASE WARNING ---")
                 print(f"Could not connect to MySQL database.")
                 print("Make sure your MySQL server is running and the database exists if you want to use it.")
-                print("Falling back to local SQLite database: sqlite:///./voice2sign.db")
+                print("Falling back to local SQLite database: sqlite:///./voice_ver_sign.db")
                 print(f"------------------------\n")
-                fallback_url = "sqlite:///./voice2sign.db"
+                fallback_url = "sqlite:///./voice_ver_sign.db"
                 _engine = create_engine(fallback_url, connect_args={"check_same_thread": False})
         else:
             _engine = temp_engine
@@ -261,3 +261,27 @@ def count_users_by_type(user_type: str) -> int:
     with session_scope() as session:
         n = session.scalar(select(func.count()).select_from(User).where(User.user_type == user_type))
         return int(n or 0)
+
+
+def get_all_users() -> list[dict]:
+    with session_scope() as session:
+        rows = session.scalars(select(User).order_by(User.created_at.desc())).all()
+        return [_user_to_dict(u) for u in rows]
+
+
+def delete_user(user_id: str) -> bool:
+    with session_scope() as session:
+        user = session.get(User, user_id)
+        if not user:
+            return False
+        # Chats and user_preferences relationships are configured with cascade delete in models.py,
+        # but to be safe and thorough:
+        chats = session.scalars(select(Chat).where(Chat.user_id == user_id)).all()
+        for chat in chats:
+            session.delete(chat)
+        pref = session.get(UserPreference, user_id)
+        if pref:
+            session.delete(pref)
+        session.delete(user)
+        return True
+

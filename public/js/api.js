@@ -1,5 +1,5 @@
 /**
- * Voice2Sign – API client (same-origin only).
+ * Voice Ver Sign – API client (same-origin only).
  * API base URL and WebSocket endpoints are NOT user-configurable in the browser
  * (secrets and server routing belong on the server / reverse proxy).
  */
@@ -59,6 +59,20 @@ const ApiClient = (() => {
         }
 
         if (!response.ok) {
+            if (response.status === 401) {
+                clearToken();
+                try {
+                    localStorage.removeItem("userName");
+                    localStorage.removeItem("userType");
+                    localStorage.removeItem("userRole");
+                    localStorage.removeItem("currentUser");
+                } catch (e) {}
+                
+                // Avoid infinite redirect loops if we are already on a login/signup page
+                if (!window.location.pathname.endsWith("login.html") && !window.location.pathname.endsWith("signup.html")) {
+                    window.location.replace(window.location.pathname.includes("/dashboards/") ? "../login.html" : "login.html");
+                }
+            }
             const message = payload?.detail || payload?.message || `Request failed: ${response.status}`;
             throw new Error(message);
         }
@@ -85,6 +99,16 @@ const ApiClient = (() => {
             method: "POST",
             body: JSON.stringify({ email }),
         });
+    }
+
+    function devAutoLogin() {
+        /* Only available when the server is running with VVS_DEV_MODE=1.
+           Returns the same shape as login() / signup(). */
+        return request("/api/auth/dev-auto-login", { method: "POST" });
+    }
+
+    function devModeStatus() {
+        return request("/api/auth/dev-mode-status");
     }
 
     function getMe() {
@@ -176,6 +200,23 @@ const ApiClient = (() => {
         });
     }
 
+    function getAdminUsers() {
+        return request("/api/admin/users");
+    }
+
+    function deleteAdminUser(userId) {
+        return request(`/api/admin/users/${userId}`, {
+            method: "DELETE",
+        });
+    }
+
+    function createAdminUser(data) {
+        return request("/api/admin/users", {
+            method: "POST",
+            body: JSON.stringify(data),
+        });
+    }
+
     return {
         getBaseUrl,
         setBaseUrl,
@@ -187,8 +228,13 @@ const ApiClient = (() => {
         login,
         signup,
         forgotPassword,
+        devAutoLogin,
+        devModeStatus,
         getMe,
         getAdminStats,
+        getAdminUsers,
+        deleteAdminUser,
+        createAdminUser,
         getChats,
         createChat,
         deleteChat,

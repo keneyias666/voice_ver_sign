@@ -21,8 +21,8 @@ Use OpenCV in Python services (e.g. processing frames from the browser via uploa
 
 ## MySQL 8.0 with this app
 
-1. Create a database (e.g. `voice2sign`) in MySQL Workbench or phpMyAdmin.
+1. Create a database (e.g. `voice_ver_sign`) in MySQL Workbench or phpMyAdmin.
 2. Install deps: `pip install -r requirements.txt` (includes `pymysql`).
 3. In `.env`:  
-   `DATABASE_URL=mysql+pymysql://USER:PASSWORD@127.0.0.1:3306/voice2sign`
+   `DATABASE_URL=mysql+pymysql://USER:PASSWORD@127.0.0.1:3306/voice_ver_sign`
 4. Start the app — tables are created on startup (`create_all`). For production, consider Alembic migrations (see `docs/DATABASE.md`).

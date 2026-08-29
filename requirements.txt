@@ -11,8 +11,3 @@ pymysql==1.1.1
 # Used by Starlette/FastAPI TestClient and many integration tests
 httpx==0.28.1
 
-# Sign→Voice pipeline (MediaPipe hand landmarks, OpenCV frames, offline TTS)
-opencv-python-headless==4.10.0.84
-mediapipe>=0.10.14
-numpy>=1.24.0
-pyttsx3>=2.90

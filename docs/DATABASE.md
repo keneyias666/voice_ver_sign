@@ -3,7 +3,7 @@
 ## Stack
 
 - **ORM:** SQLAlchemy 2.x (`server/models.py`, `server/database.py`)
-- **Default:** SQLite file at `data/voice2sign.db` (created automatically)
+- **Default:** SQLite file at `data/voice_ver_sign.db` (created automatically)
 - **Production:** Set **`DATABASE_URL`** to PostgreSQL, e.g.  
   `postgresql+psycopg2://USER:PASS@HOST:5432/DBNAME`
 

@@ -4,14 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice2Sign — Guest Dashboard</title>
-    <meta name="description" content="Voice2Sign — Welcome. Try the demo flows without an account.">
+    <title>Voice Ver Sign — Guest Dashboard</title>
+    <meta name="description" content="Voice Ver Sign — Welcome. Try the demo flows without an account.">
+    <meta name="theme-color" content="#0d0d14" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f4f4f5" media="(prefers-color-scheme: light)">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(self), camera=(self), payment=(), usb=()">
     <link rel="icon" type="image/png" href="../images/transparent-logo.svg">
-    <link rel="stylesheet" href="../css/styles.css?v=20250612">
+    <link rel="stylesheet" href="../css/styles.css?v=20260829">
     <link rel="stylesheet" href="../css/dashboard-hearing.css">
 </head>
 
 <body>
+    <a class="skip-link" href="#mainHeader">Skip to main content</a>
     <div class="dashboard" id="dashboardRoot" data-user-role="guest">
 
         <!-- ── Sidebar ── -->
@@ -19,8 +25,8 @@
             <div class="sidebar-header">
                 <a href="hearing.html" class="sidebar-logo" title="Home — hearing dashboard"
                     onclick="event.preventDefault(); showSection('voiceSign'); window.scrollTo(0,0); return false;">
-                    <img src="../images/transparent-logo.svg" alt="Voice2Sign" onerror="this.style.display='none'">
-                    <span class="sidebar-logo-text">Voice2Sign</span>
+                    <img src="../images/transparent-logo.svg" alt="Voice Ver Sign" onerror="this.style.display='none'">
+                    <span class="sidebar-logo-text">Voice Ver Sign</span>
                 </a>
                 <button type="button" class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -370,7 +376,7 @@
                             </svg>
                         </button>
                     </div>
-                    <input id="composerInput" class="composer-input" type="text" placeholder="Message Voice2Sign...">
+                    <input id="composerInput" class="composer-input" type="text" placeholder="Message Voice Ver Sign..." maxlength="2000" autocomplete="off" aria-label="Message composer">
                     <button class="send-btn" onclick="sendMessage()" aria-label="Send message">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -378,7 +384,7 @@
                         </svg>
                     </button>
                 </div>
-                <p class="composer-hint">Voice2Sign can make mistakes. Verify important translations.</p>
+                <p class="composer-hint">Voice Ver Sign can make mistakes. Verify important translations.</p>
             </footer>
 
         </section>

@@ -1,5 +1,5 @@
 """
-Authentication utilities for Voice2Sign.
+Authentication utilities for Voice Ver Sign.
 JWT token creation/validation and password hashing.
 """
 from __future__ import annotations
@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-SECRET_KEY = os.getenv("SECRET_KEY") or os.environ.get("V2S_SECRET", "voice2sign-dev-secret-key-change-in-prod")
+SECRET_KEY = os.getenv("SECRET_KEY") or os.environ.get("VVS_SECRET", "voice_ver_sign-dev-secret-key-change-in-prod")
 TOKEN_EXPIRY = 86400 * 7  # 7 days
 
 

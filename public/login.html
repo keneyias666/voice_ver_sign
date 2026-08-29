@@ -4,14 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice2Sign - Welcome</title>
+    <title>Voice Ver Sign - Welcome</title>
     <meta name="description"
-        content="Voice2Sign - AI-powered speech to sign language translation. Break communication barriers.">
+        content="Voice Ver Sign - AI-powered speech to sign language translation. Break communication barriers.">
+    <meta name="theme-color" content="#0d0d14" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f4f4f5" media="(prefers-color-scheme: light)">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(self), camera=(self), payment=(), usb=()">
     <link rel="icon" type="image/png" href="images/transparent-logo.svg">
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
 <body class="auth-page">
+    <a class="skip-link" href="#loginForm">Skip to sign-in form</a>
     <div class="background-logos"
         style="position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; overflow:hidden;">
         <img src="images/transparent-logo.svg"
@@ -21,8 +27,8 @@
 
     <header class="auth-header">
         <a href="index.html" class="auth-logo">
-            <img src="images/transparent-logo.svg" alt="Voice2Sign" onerror="this.style.display='none'">
-            <span class="auth-logo-text">Voice2Sign</span>
+            <img src="images/transparent-logo.svg" alt="Voice Ver Sign" onerror="this.style.display='none'">
+            <span class="auth-logo-text">Voice Ver Sign</span>
         </a>
         <div class="auth-header-actions">
             <button type="button" class="icon-btn theme-toggle-control" onclick="toggleTheme(event)"
@@ -44,7 +50,7 @@
                 <span
                     style="display:inline-block; width:8px; height:8px; background:#e0b694; border-radius:50%; box-shadow: 0 0 10px #e0b694;"></span>
                 <span
-                    style="font-size:13px; font-weight:600; color:rgba(255,255,255,0.9); letter-spacing:1px; text-transform:uppercase;">Voice2Sign</span>
+                    style="font-size:13px; font-weight:600; color:rgba(255,255,255,0.9); letter-spacing:1px; text-transform:uppercase;">Voice Ver Sign</span>
             </div>
             <h1
                 style="font-size: 56px; font-weight: 800; margin-bottom: 24px; line-height: 1.1; letter-spacing: -1.5px; color: white;">
@@ -61,15 +67,15 @@
 
         <div class="auth-card" style="position:relative; z-index:1;">
             <div class="auth-card-header">
-                <img src="images/transparent-logo.svg" alt="Voice2Sign" class="auth-card-logo"
+                <img src="images/transparent-logo.svg" alt="Voice Ver Sign" class="auth-card-logo"
                     onerror="this.style.display='none'">
                 <h1 class="auth-card-title">Welcome back</h1>
                 <p class="auth-card-subtitle">Sign in to continue translating</p>
             </div>
 
             <div class="social-buttons">
-                <button class="social-btn" onclick="loginWithGoogle()">
-                    <svg viewBox="0 0 24 24">
+                <button type="button" class="social-btn" onclick="loginWithGoogle()" aria-label="Continue with Google">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
                         <path fill="#4285F4"
                             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                         <path fill="#34A853"
@@ -81,8 +87,8 @@
                     </svg>
                     Continue with Google
                 </button>
-                <button class="social-btn" onclick="loginWithFacebook()">
-                    <svg viewBox="0 0 24 24" fill="#1877F2">
+                <button type="button" class="social-btn" onclick="loginWithFacebook()" aria-label="Continue with Facebook">
+                    <svg viewBox="0 0 24 24" fill="#1877F2" aria-hidden="true">
                         <path
                             d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                     </svg>
@@ -96,30 +102,36 @@
                 <div class="auth-divider-line"></div>
             </div>
 
-            <form id="loginForm" onsubmit="handleLogin(event)">
+            <form id="loginForm" onsubmit="handleLogin(event)" novalidate>
+                <div class="form-message" id="loginFormMessage" role="alert" aria-live="polite"></div>
                 <div class="form-group">
-                    <label class="form-label" for="email">Email</label>
-                    <input type="email" id="email" class="form-input" placeholder="you@example.com" required>
+                    <label class="form-label" for="email">Email <span class="req" aria-hidden="true">*</span></label>
+                    <input type="email" id="email" name="email" class="form-input" placeholder="you@example.com"
+                        autocomplete="username" autocapitalize="none" spellcheck="false" required
+                        aria-required="true" aria-describedby="emailHelp">
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="password">Password</label>
+                    <label class="form-label" for="password">Password <span class="req" aria-hidden="true">*</span></label>
                     <div class="input-wrapper">
-                        <input type="password" id="password" class="form-input" placeholder="Enter your password"
-                            required>
-                        <svg class="input-icon" onclick="togglePasswordVisibility('password')" fill="none"
-                            stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
+                        <input type="password" id="password" name="password" class="form-input"
+                            placeholder="Enter your password" autocomplete="current-password" required
+                            aria-required="true">
+                        <button type="button" class="input-icon" onclick="togglePasswordVisibility('password')"
+                            aria-label="Show password" aria-controls="password">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
 
                 <div class="form-footer">
                     <div class="checkbox-wrapper">
-                        <input type="checkbox" id="remember" class="checkbox">
+                        <input type="checkbox" id="remember" name="remember" class="checkbox">
                         <label for="remember" class="checkbox-label">Remember me</label>
                     </div>
                     <a href="forgot-password.html" class="form-link">Forgot password?</a>
@@ -131,12 +143,49 @@
             <div class="auth-switch">
                 Don't have an account? <a href="signup.html">Sign up</a>
             </div>
+
+            <!-- Dev-only auto-login. The panel is hidden by default and only
+                 revealed when the server reports VVS_DEV_MODE=1. This is
+                 never visible in production unless dev mode is on. -->
+            <div class="dev-panel" id="devAutoLoginPanel" hidden>
+                <div class="dev-panel-head">
+                    <span class="dev-panel-badge" aria-hidden="true">DEV</span>
+                    <span class="dev-panel-title">Quick admin sign-in</span>
+                </div>
+                <p class="dev-panel-desc">
+                    Auto-login as the seeded admin. Available because the server
+                    is running with <code>VVS_DEV_MODE=1</code>. This panel is
+                    never rendered in production.
+                </p>
+                <button type="button" class="btn-primary dev-panel-btn" id="devAutoLoginBtn"
+                    onclick="handleDevAutoLogin(event)">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Auto-login as admin
+                </button>
+            </div>
         </div>
     </main>
 
     <script src="js/app.js"></script>
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
+    <script>
+        /* Only show the dev panel if the server reports dev mode is on. */
+        (function () {
+            fetch("/api/auth/dev-mode-status", { cache: "no-store" })
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (data) {
+                    if (data && data.devMode) {
+                        var el = document.getElementById("devAutoLoginPanel");
+                        if (el) el.hidden = false;
+                    }
+                })
+                .catch(function () { /* dev mode is off */ });
+        })();
+    </script>
 </body>
 
 </html>

@@ -4,8 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice2Sign — Admin Dashboard</title>
-    <meta name="description" content="Voice2Sign Admin & Analytics">
+    <title>Voice Ver Sign — Admin Dashboard</title>
+    <meta name="description" content="Voice Ver Sign Admin & Analytics">
+    <meta name="theme-color" content="#0d0d14" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f4f4f5" media="(prefers-color-scheme: light)">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(self), camera=(self), payment=(), usb=()">
+    <meta name="robots" content="noindex,nofollow">
     <link rel="icon" type="image/png" href="../images/transparent-logo.png">
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="../css/admin-theme.css">
@@ -13,11 +19,12 @@
 </head>
 
 <body>
+    <a class="skip-link" href=".maxton-main">Skip to admin content</a>
 
     <!-- ── SIDEBAR ── -->
     <aside class="maxton-sidebar">
         <div class="maxton-brand" style="justify-content: center;">
-            <img src="../images/transparent-logo.png" style="width:24px;height:24px;" alt="Voice2Sign"
+            <img src="../images/transparent-logo.png" style="width:24px;height:24px;" alt="Voice Ver Sign"
                 onerror="this.style.display='none'">
         </div>
         
@@ -91,8 +98,8 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                <input type="text" placeholder="Search..."
-                    onkeydown="if(event.key === 'Enter' && this.value) { Toast.info('Searching: ' + this.value); this.value=''; }">
+                <input type="text" id="adminSearchInput" placeholder="Search users/roles..."
+                    oninput="filterAdminUsers()">
             </div>
 
             <div class="maxton-top-actions">
@@ -500,8 +507,7 @@
             <div class="maxton-card" style="width: 100%;">
                 <div class="maxton-card-header">
                     <h3 class="maxton-card-title">User Management</h3>
-                    <button class="pipeline-btn-primary" onclick="Toast.info('Add User logic stubbed')">+ Add
-                        User</button>
+                    <button class="pipeline-btn-primary" onclick="document.getElementById('addUserModal').style.display='flex'">+ Add User</button>
                 </div>
                 <div style="overflow-x: auto; margin-top: 16px;">
                     <table style="width: 100%; border-collapse: collapse; text-align: left;">
@@ -534,7 +540,7 @@
                 </svg>
                 <h2 id="placeholderTitle" style="margin-bottom: 8px;">Section Content</h2>
                 <p style="color: var(--text-secondary); max-width: 400px;">This module will display detailed insights
-                    and management utilities once connected to the deeper Voice2Sign backend services.</p>
+                    and management utilities once connected to the deeper Voice Ver Sign backend services.</p>
             </div>
         </div>
 
@@ -570,7 +576,7 @@
                     <div>
                         <label style="font-weight:500; font-size:13px; display:block; margin-bottom:6px;">Email
                             Address</label>
-                        <input type="email" value="admin@voice2sign.com"
+                        <input type="email" value="admin@voice_ver_sign.com"
                             style="width:100%; border:1px solid var(--border); border-radius:6px; padding:10px 12px; background:var(--bg-main); color:var(--text-primary); font-family:inherit;">
                     </div>
                     <div>
@@ -637,6 +643,40 @@
         </div>
 
     </main>
+
+    <!-- Add User Modal -->
+    <div id="addUserModal"
+        style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; backdrop-filter: blur(4px);">
+        <div style="background:var(--maxton-card); padding:32px; border-radius:12px; max-width:400px; width:100%; box-shadow:0 10px 40px rgba(0,0,0,0.5); border: 1px solid var(--maxton-border); animation:adminFadeIn 0.2s ease-out;">
+            <h3 style="margin:0 0 16px; font-size:20px; color:var(--text-primary);">Add New User</h3>
+            <form id="addUserForm" onsubmit="handleAdminCreateUser(event)" style="display:flex; flex-direction:column; gap:12px;">
+                <div>
+                    <label style="font-weight:500; font-size:12px; display:block; margin-bottom:4px; color: var(--text-primary);">Full Name</label>
+                    <input type="text" id="addUserName" required style="width:100%; border:1px solid var(--border); border-radius:6px; padding:8px 12px; background:var(--bg-primary); color:var(--text-primary); outline: none;">
+                </div>
+                <div>
+                    <label style="font-weight:500; font-size:12px; display:block; margin-bottom:4px; color: var(--text-primary);">Email Address</label>
+                    <input type="email" id="addUserEmail" required style="width:100%; border:1px solid var(--border); border-radius:6px; padding:8px 12px; background:var(--bg-primary); color:var(--text-primary); outline: none;">
+                </div>
+                <div>
+                    <label style="font-weight:500; font-size:12px; display:block; margin-bottom:4px; color: var(--text-primary);">Password</label>
+                    <input type="password" id="addUserPassword" required style="width:100%; border:1px solid var(--border); border-radius:6px; padding:8px 12px; background:var(--bg-primary); color:var(--text-primary); outline: none;">
+                </div>
+                <div>
+                    <label style="font-weight:500; font-size:12px; display:block; margin-bottom:4px; color: var(--text-primary);">User Role</label>
+                    <select id="addUserRole" style="width:100%; border:1px solid var(--border); border-radius:6px; padding:8px 12px; background:var(--bg-primary); color:var(--text-primary); outline: none;">
+                        <option value="hearing">Hearing User</option>
+                        <option value="deaf">Deaf User</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:16px;">
+                    <button type="button" class="pipeline-btn-secondary" style="flex:1; border: 1px solid var(--border); background: var(--bg-hover); color: var(--text-primary); border-radius: 6px; padding: 10px; cursor: pointer; font-weight: 600;" onclick="document.getElementById('addUserModal').style.display='none'">Cancel</button>
+                    <button type="submit" class="pipeline-btn-primary" style="flex:1; background: var(--accent); color: white; border: none; border-radius: 6px; padding: 10px; cursor: pointer; font-weight: 600;">Create User</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Save Profile Success Modal -->
     <div id="profileSaveModal"
@@ -790,35 +830,113 @@
             }
         }
 
-        function loadDynamicUsers() {
-            const users = [
-                { name: "Elias Amaba", email: "elias@example.com", role: "Admin", status: "Active", bg: "var(--maxton-cyan)" },
-                { name: "Jane Doe", email: "jane@example.com", role: "Deaf User", status: "Active", bg: "var(--maxton-purple)" },
-                { name: "John Smith", email: "johnsmith@example.com", role: "Hearing", status: "Pending", bg: "var(--maxton-blue)", statusColor: "var(--maxton-yellow)" },
-                { name: "Maria Garcia", email: "maria.g@example.com", role: "Deaf User", status: "Active", bg: "var(--maxton-pink)" },
-                { name: "Guest User", email: "guest" + Math.floor(Math.random() * 1000) + "@demo.com", role: "Guest", status: "Offline", bg: "var(--maxton-gray)", statusColor: "var(--text-muted)" }
-            ];
+        let allUsersData = [];
 
+        async function loadDynamicUsers() {
+            const tbody = document.getElementById('usersTableBody');
+            if (!tbody) return;
+            
+            try {
+                const response = await ApiClient.getAdminUsers();
+                allUsersData = response.users || [];
+            } catch (err) {
+                console.error("Failed to load users from API, showing mocks:", err);
+                allUsersData = [
+                    { id: "mock1", name: "Elias Amaba", email: "elias@example.com", user_type: "admin", status: "Active", bg: "var(--maxton-cyan)" },
+                    { id: "mock2", name: "Jane Doe", email: "jane@example.com", user_type: "deaf", status: "Active", bg: "var(--maxton-purple)" },
+                    { id: "mock3", name: "John Smith", email: "johnsmith@example.com", user_type: "hearing", status: "Pending", bg: "var(--maxton-blue)" },
+                    { id: "mock4", name: "Maria Garcia", email: "maria.g@example.com", user_type: "deaf", status: "Active", bg: "var(--maxton-pink)" }
+                ];
+            }
+            renderUsersTable(allUsersData);
+        }
+
+        async function handleAdminCreateUser(e) {
+            e.preventDefault();
+            const name = document.getElementById("addUserName").value.trim();
+            const email = document.getElementById("addUserEmail").value.trim();
+            const password = document.getElementById("addUserPassword").value;
+            const userType = document.getElementById("addUserRole").value;
+
+            try {
+                await ApiClient.createAdminUser({ name, email, password, userType });
+                Toast.success("User created successfully!");
+                document.getElementById('addUserModal').style.display = 'none';
+                document.getElementById('addUserForm').reset();
+                loadDynamicUsers();
+            } catch (err) {
+                Toast.error("Failed to create user: " + err.message);
+            }
+        }
+
+        async function handleAdminDeleteUser(userId, userName) {
+            if (!confirm(`Are you sure you want to delete user ${userName}?`)) return;
+            try {
+                await ApiClient.deleteAdminUser(userId);
+                Toast.success(`User ${userName} deleted successfully.`);
+                loadDynamicUsers();
+            } catch (err) {
+                Toast.error("Failed to delete user: " + err.message);
+            }
+        }
+
+        function filterAdminUsers() {
+            const query = document.getElementById("adminSearchInput").value.toLowerCase();
+            const filtered = allUsersData.filter(u => 
+                (u.name || "").toLowerCase().includes(query) || 
+                (u.email || "").toLowerCase().includes(query) ||
+                (u.user_type || "").toLowerCase().includes(query)
+            );
+            renderUsersTable(filtered);
+        }
+
+        function renderUsersTable(usersList) {
             const tbody = document.getElementById('usersTableBody');
             if (!tbody) return;
 
-            tbody.innerHTML = users.map(u => `
-                <tr style="border-bottom: 1px solid var(--border);">
-                    <td style="padding: 12px; display: flex; align-items: center; gap: 8px;">
-                        <div style="width: 32px; height: 32px; border-radius: 50%; background: ${u.bg}; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold;">
-                            ${(u.name.match(/\b\w/g) || []).join('').substring(0, 2).toUpperCase()}
-                        </div>
-                        ${u.name}
-                    </td>
-                    <td style="padding: 12px; color: var(--text-secondary);">${u.email}</td>
-                    <td style="padding: 12px;"><span style="background: var(--bg-hover); padding: 4px 8px; border-radius: 4px; font-size: 12px;">${u.role}</span></td>
-                    <td style="padding: 12px;"><span style="color: ${u.statusColor || 'var(--maxton-green)'}; font-size: 12px; font-weight: 600;">${u.status}</span></td>
-                    <td style="padding: 12px; display: flex; justify-content: flex-end; align-items: center; gap: 8px;">
-                        <button class="maxton-icon-btn" onclick="Toast.info('Edit User: ${u.name}')" style="width: 32px; height: 32px;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
-                        <button class="maxton-icon-btn" style="color: var(--maxton-red); width: 32px; height: 32px;" onclick="Toast.info('Delete User: ${u.name}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
-                    </td>
-                </tr>
-            `).join('');
+            if (usersList.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="padding: 24px; text-align: center; color: var(--text-secondary);">
+                            No users found.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const bgMap = {
+                "admin": "var(--maxton-cyan)",
+                "deaf": "var(--maxton-purple)",
+                "hearing": "var(--maxton-blue)"
+            };
+
+            tbody.innerHTML = usersList.map(u => {
+                const roleLabel = u.user_type === "admin" ? "Admin" : u.user_type === "deaf" ? "Deaf User" : "Hearing User";
+                const bg = bgMap[u.user_type] || "var(--maxton-gray)";
+                const initials = (u.name.match(/\b\w/g) || []).join('').substring(0, 2).toUpperCase() || "U";
+                const deleteAction = u.user_type === "admin" 
+                    ? `onclick="Toast.warning('Cannot delete administrators directly.')"`
+                    : `onclick="handleAdminDeleteUser('${u.id}', '${escapeHtml(u.name)}')"`;
+
+                return `
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 12px; display: flex; align-items: center; gap: 8px;">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: ${bg}; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size:12px;">
+                                ${initials}
+                            </div>
+                            <span style="color:var(--text-primary); font-weight:500;">${escapeHtml(u.name)}</span>
+                        </td>
+                        <td style="padding: 12px; color: var(--text-secondary);">${escapeHtml(u.email)}</td>
+                        <td style="padding: 12px;"><span style="background: var(--bg-hover); padding: 4px 8px; border-radius: 4px; font-size: 12px; color: var(--text-primary); font-weight:500;">${roleLabel}</span></td>
+                        <td style="padding: 12px;"><span style="color: var(--maxton-green); font-size: 12px; font-weight: 600;">Active</span></td>
+                        <td style="padding: 12px; display: flex; justify-content: flex-end; align-items: center; gap: 8px;">
+                            <button class="maxton-icon-btn" onclick="Toast.info('User details: ${escapeHtml(u.name)} (${escapeHtml(u.email)})')" style="width: 32px; height: 32px;"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
+                            <button class="maxton-icon-btn" style="color: var(--maxton-red); width: 32px; height: 32px;" ${deleteAction}><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         document.addEventListener('DOMContentLoaded', () => {

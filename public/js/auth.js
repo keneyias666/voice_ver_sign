@@ -1,5 +1,5 @@
 /**
- * Voice2Sign – Auth Page Logic
+ * Voice Ver Sign – Auth Page Logic
  * Login, signup, and forgot-password handlers.
  */
 
@@ -18,7 +18,25 @@ function dashboardUrlForUserType(userType) {
 function togglePasswordVisibility(inputId) {
     const input = document.getElementById(inputId);
     if (!input) return;
-    input.type = input.type === "password" ? "text" : "password";
+    const isHidden = input.type === "password";
+    input.type = isHidden ? "text" : "password";
+    /* Update the toggle's accessible label so screen readers announce the new state. */
+    const btn = document.querySelector(`button[aria-controls="${inputId}"]`);
+    if (btn) btn.setAttribute("aria-label", isHidden ? "Hide password" : "Show password");
+}
+
+/* ── Inline form error helper ── */
+function setFormMessage(formId, message, type = "error") {
+    const el = document.getElementById(formId + "FormMessage");
+    if (!el) return;
+    if (!message) {
+        el.classList.remove("show", "error", "success");
+        el.textContent = "";
+        return;
+    }
+    el.classList.remove("error", "success");
+    el.classList.add("show", type);
+    el.textContent = message;
 }
 
 /* ── Password Strength ── */
@@ -52,7 +70,9 @@ function checkPasswordStrength(password) {
 function selectUserType(type) {
     selectedUserType = type;
     document.querySelectorAll(".user-type-btn").forEach((btn) => {
-        btn.classList.toggle("active", btn.dataset.type === type);
+        const isActive = btn.dataset.type === type;
+        btn.classList.toggle("active", isActive);
+        btn.setAttribute("aria-checked", isActive ? "true" : "false");
     });
 }
 
@@ -76,8 +96,10 @@ async function handleLogin(event) {
     const email = document.getElementById("email")?.value?.trim();
     const password = document.getElementById("password")?.value;
     const btn = document.getElementById("loginBtn");
+    setFormMessage("login", "");
 
     if (!email || !password) {
+        setFormMessage("login", "Please enter both email and password.", "error");
         Toast.warning("Please enter email and password.");
         return;
     }
@@ -95,11 +117,14 @@ async function handleLogin(event) {
                 localStorage.setItem("userRole", ut);
             }
         }
+        setFormMessage("login", "Signed in. Redirecting...", "success");
         Toast.success("Signed in successfully!");
         const ut = result?.user?.userType || localStorage.getItem("userType") || "hearing";
         setTimeout(() => (window.location.href = dashboardUrlForUserType(ut)), 600);
     } catch (error) {
-        Toast.error(error.message || "Login failed. Please try again.");
+        const msg = error.message || "Login failed. Please try again.";
+        setFormMessage("login", msg, "error");
+        Toast.error(msg);
         setLoading(btn, false);
     }
 }
@@ -115,20 +140,25 @@ async function handleSignup(event) {
     const confirmPassword = document.getElementById("confirmPassword")?.value || "";
     const termsAccepted = document.getElementById("terms")?.checked;
     const btn = document.querySelector("button[type='submit']");
+    setFormMessage("signup", "");
 
     if (!firstName || !lastName || !email) {
+        setFormMessage("signup", "Please complete all required fields.", "error");
         Toast.warning("Please complete all required fields.");
         return;
     }
     if (password !== confirmPassword) {
+        setFormMessage("signup", "Passwords do not match.", "error");
         Toast.error("Passwords do not match.");
         return;
     }
     if (checkPasswordStrength(password) < 2) {
+        setFormMessage("signup", "Please choose a stronger password.", "error");
         Toast.warning("Please choose a stronger password.");
         return;
     }
     if (!termsAccepted) {
+        setFormMessage("signup", "Please accept the terms to continue.", "error");
         Toast.warning("Please accept terms to continue.");
         return;
     }
@@ -152,11 +182,14 @@ async function handleSignup(event) {
                 localStorage.setItem("userRole", ut);
             }
         }
+        setFormMessage("signup", "Account created. Redirecting...", "success");
         Toast.success("Account created successfully!");
         const ut = result?.user?.userType || selectedUserType || "hearing";
         setTimeout(() => (window.location.href = dashboardUrlForUserType(ut)), 600);
     } catch (error) {
-        Toast.error(error.message || "Signup failed. Please try again.");
+        const msg = error.message || "Signup failed. Please try again.";
+        setFormMessage("signup", msg, "error");
+        Toast.error(msg);
         setLoading(btn, false);
     }
 }
@@ -166,9 +199,12 @@ async function handleSignup(event) {
 async function handleForgotPassword(event) {
     event.preventDefault();
     const email = document.getElementById("email")?.value?.trim();
-    const btn = document.querySelector("button[type='submit']");
+    const btn = event?.target?.querySelector?.("button[type='submit']") ||
+        document.querySelector("button[type='submit']");
+    setFormMessage("forgot", "");
 
     if (!email) {
+        setFormMessage("forgot", "Please enter your email.", "error");
         Toast.warning("Please enter your email.");
         return;
     }
@@ -177,8 +213,12 @@ async function handleForgotPassword(event) {
 
     try {
         await ApiClient.forgotPassword(email);
+        setFormMessage("forgot", "If this email is registered, a reset link has been sent.", "success");
         Toast.success("Reset link sent. Check your inbox.");
     } catch (error) {
+        /* Always show a generic success-like message to avoid leaking which
+           emails are registered. */
+        setFormMessage("forgot", "If this email is registered, a reset link has been sent.", "success");
         Toast.info("If this email exists, a reset link has been sent.");
     } finally {
         setLoading(btn, false);
@@ -193,6 +233,35 @@ function loginWithGoogle() {
 
 function loginWithFacebook() {
     Toast.info("Facebook sign-in coming soon.");
+}
+
+/* ── Dev auto-login (only available when VVS_DEV_MODE=1) ── */
+
+async function handleDevAutoLogin(event) {
+    if (event) event.preventDefault();
+    const btn = document.getElementById("devAutoLoginBtn");
+    setLoading(btn, true);
+    setFormMessage("login", "");
+
+    try {
+        const result = await ApiClient.devAutoLogin();
+        if (result?.token) {
+            ApiClient.setToken(result.token);
+            if (result.user) {
+                localStorage.setItem("userName", result.user.name || "");
+                localStorage.setItem("userType", "admin");
+                localStorage.setItem("userRole", "admin");
+            }
+        }
+        setFormMessage("login", "Signed in as admin. Redirecting...", "success");
+        Toast.success("Auto-login successful — welcome, admin.");
+        setTimeout(() => (window.location.href = "dashboards/admin.html"), 500);
+    } catch (error) {
+        const msg = error.message || "Dev auto-login failed. Is VVS_DEV_MODE=1 set on the server?";
+        setFormMessage("login", msg, "error");
+        Toast.error(msg);
+        setLoading(btn, false);
+    }
 }
 
 /* ── Init ── */

@@ -3,22 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice2Sign — Deaf / HoH dashboard</title>
-    <meta name="description" content="Voice2Sign — Sign → Voice first for deaf and hard-of-hearing users.">
+    <title>Voice Ver Sign — Deaf / HoH dashboard</title>
+    <meta name="description" content="Voice Ver Sign — Sign → Voice first for deaf and hard-of-hearing users.">
+    <meta name="theme-color" content="#0d0d14" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f4f4f5" media="(prefers-color-scheme: light)">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(self), camera=(self), payment=(), usb=()">
     <link rel="icon" type="image/png" href="../images/transparent-logo.svg">
-    <link rel="stylesheet" href="../css/styles.css?v=20250612">
+    <link rel="stylesheet" href="../css/styles.css?v=20260829">
     <link rel="stylesheet" href="../css/dashboard-deaf.css">
     <link rel="stylesheet" href="../css/user-menu.css">
 </head>
 <body>
+    <a class="skip-link" href="#mainHeader">Skip to main content</a>
     <div class="dashboard" id="dashboardRoot" data-user-role="deaf">
 
         <!-- ── Sidebar ── -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <a href="deaf.html" class="sidebar-logo" title="Home — deaf / HoH dashboard" onclick="event.preventDefault(); showSection('signVoice'); window.scrollTo(0,0); return false;">
-                    <img src="../images/transparent-logo.svg" alt="Voice2Sign" onerror="this.style.display='none'">
-                    <span class="sidebar-logo-text">Voice2Sign</span>
+                    <img src="../images/transparent-logo.svg" alt="Voice Ver Sign" onerror="this.style.display='none'">
+                    <span class="sidebar-logo-text">Voice Ver Sign</span>
                 </a>
                 <button type="button" class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,7 +92,7 @@
                     Settings
                 </button>
                 <div class="dropdown-divider"></div>
-                <button class="dropdown-item" onclick="window.open('https://github.com/voice2sign', '_blank')">
+                <button class="dropdown-item" onclick="window.open('https://github.com/keneyias666/voice_ver_sign', '_blank', 'noopener,noreferrer')">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     Help
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="dropdown-item-arrow" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
@@ -318,7 +324,7 @@
             <div class="section-panel section-hidden" id="preferencesPanel">
                 <div class="panel-header" style="margin-bottom:24px;">
                     <h2 class="panel-title" style="font-size:24px; font-weight:600;">Preferences</h2>
-                    <p class="panel-subtitle" style="color:var(--text-secondary);">Customize your Voice2Sign experience</p>
+                    <p class="panel-subtitle" style="color:var(--text-secondary);">Customize your Voice Ver Sign experience</p>
                 </div>
                 <div class="panel-card" style="margin-bottom:24px; padding:20px; border:1px solid var(--border); border-radius:12px; background:var(--bg-elevated);">
                     <label class="pref-row"><span>Auto-play translation responses</span><input type="checkbox" id="prefAutoplay" class="toggle-check"></label>
@@ -388,7 +394,7 @@
                     </div>
                     <label class="pref-row vertical" style="margin:0; padding:0; border:none; margin-bottom:24px; display:block;">
                         <span style="font-weight:500; font-size:13px; display:block; margin-bottom:6px;">Email Address</span>
-                        <input type="email" id="profEmail" class="pref-input" placeholder="elias@voice2sign.com" style="width:100%; border:1px solid var(--border); border-radius:6px; padding:8px 12px; background:var(--bg-main); color:var(--text-primary);">
+                        <input type="email" id="profEmail" class="pref-input" placeholder="elias@voice_ver_sign.com" style="width:100%; border:1px solid var(--border); border-radius:6px; padding:8px 12px; background:var(--bg-main); color:var(--text-primary);">
                     </label>
                     
                     <button class="btn-primary" onclick="saveUserProfile()" style="padding:8px 16px;">Save Profile</button>
@@ -420,12 +426,12 @@
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                         </button>
                     </div>
-                    <input id="composerInput" class="composer-input" type="text" placeholder="Message Voice2Sign...">
+                    <input id="composerInput" class="composer-input" type="text" placeholder="Message Voice Ver Sign..." maxlength="2000" autocomplete="off" aria-label="Message composer">
                     <button class="send-btn" onclick="sendMessage()" aria-label="Send message">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
                     </button>
                 </div>
-                <p class="composer-hint">Voice2Sign can make mistakes. Verify important translations.</p>
+                <p class="composer-hint">Voice Ver Sign can make mistakes. Verify important translations.</p>
             </footer>
 
         </section>

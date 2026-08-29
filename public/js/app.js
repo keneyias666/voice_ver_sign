@@ -1,5 +1,5 @@
 /**
- * Voice2Sign – App Utilities
+ * Voice Ver Sign – App Utilities
  * Theme management, toast system, and shared helpers.
  */
 
@@ -47,8 +47,9 @@ const ThemeManager = {
     },
 
     init() {
-        const saved = localStorage.getItem("theme") || "light";
-        this.set(saved);
+        const saved = localStorage.getItem("theme");
+        const fallback = document.documentElement.getAttribute("data-theme") || "light";
+        this.set(saved || fallback);
     },
 };
 
@@ -79,8 +80,16 @@ const Toast = (() => {
         const c = ensureContainer();
         const toast = document.createElement("div");
         toast.className = `toast toast-${type}`;
-        const icon = icons[type] || icons.info;
-        toast.innerHTML = `${icon}<span>${message}</span>`;
+        toast.setAttribute("role", type === "error" || type === "warning" ? "alert" : "status");
+        toast.setAttribute("aria-live", type === "error" || type === "warning" ? "assertive" : "polite");
+        const iconWrap = document.createElement("span");
+        iconWrap.className = "toast-icon-wrap";
+        iconWrap.innerHTML = icons[type] || icons.info;
+        const text = document.createElement("span");
+        text.className = "toast-text";
+        text.textContent = String(message);
+        toast.appendChild(iconWrap);
+        toast.appendChild(text);
         c.appendChild(toast);
 
         setTimeout(() => {
@@ -181,5 +190,82 @@ function initCustomCursor() {
 
 document.addEventListener("DOMContentLoaded", () => {
     ThemeManager.init();
-    initCustomCursor();
+    // Custom cursor removed — using default system cursor
+    // initCustomCursor();
+    initConnectionMonitor();
 });
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CONNECTION MONITOR
+   ══════════════════════════════════════════════════════════════════════════ */
+
+let connectionBanner = null;
+let connectionCheckTimer = null;
+let lastConnectionState = null;
+
+function setConnectionBanner(state, message) {
+    if (!connectionBanner) {
+        connectionBanner = document.createElement("div");
+        connectionBanner.className = "connection-banner";
+        connectionBanner.setAttribute("role", "status");
+        connectionBanner.setAttribute("aria-live", "polite");
+        document.body.prepend(connectionBanner);
+    }
+    if (!state) {
+        connectionBanner.classList.remove("show", "error");
+        return;
+    }
+    connectionBanner.classList.add("show");
+    connectionBanner.classList.toggle("error", state === "error");
+    connectionBanner.textContent = message;
+}
+
+async function checkConnection() {
+    /* Same-origin /api/health. If the network is down or the server is
+       unreachable, surface a banner. */
+    try {
+        const c = new AbortController();
+        const t = setTimeout(() => c.abort(), 5000);
+        const res = await fetch("/api/health", { cache: "no-store", signal: c.signal });
+        clearTimeout(t);
+        if (res.ok) {
+            if (lastConnectionState !== "ok") {
+                setConnectionBanner(null);
+                lastConnectionState = "ok";
+            }
+        } else {
+            if (lastConnectionState !== "error") {
+                setConnectionBanner("error", "Server unavailable — some features may not work.");
+                lastConnectionState = "error";
+            }
+        }
+    } catch (e) {
+        if (lastConnectionState !== "error") {
+            setConnectionBanner("error", "You are offline — reconnecting…");
+            lastConnectionState = "error";
+        }
+    }
+}
+
+function initConnectionMonitor() {
+    /* Skip the check on auth pages — they should not show a banner
+       before the user has logged in. */
+    if (document.body.classList.contains("auth-page")) return;
+    checkConnection();
+    if (connectionCheckTimer) clearInterval(connectionCheckTimer);
+    connectionCheckTimer = setInterval(checkConnection, 30000);
+    window.addEventListener("online", () => checkConnection());
+    window.addEventListener("offline", () =>
+        setConnectionBanner("error", "You are offline — reconnecting…")
+    );
+}
+
+function escapeHtml(str) {
+    if (!str) return "";
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}

@@ -1,6 +1,6 @@
 /**
-* Voice2Sign – Shared dashboard logic (used by `dashboards/hearing.html`, `deaf.html`, `admin.html`).
- * Each page loads `js/dashboard-<role>.js` first to set `window.__VOICE2SIGN_DASHBOARD__`, then this file.
+* Voice Ver Sign – Shared dashboard logic (used by `dashboards/hearing.html`, `deaf.html`, `admin.html`).
+ * Each page loads `js/dashboard-<role>.js` first to set `window.__VOICE_VER_SIGN_DASHBOARD__`, then this file.
  */
 
 let sidebarCollapsed = localStorage.getItem("sidebarCollapsed") === "true";
@@ -12,6 +12,7 @@ let currentChatId = null;
 
 const PREFS_KEY = "dashboardPreferences";
 const USER_ROLE_KEY = "userRole";
+const authPathPrefix = window.location.pathname.includes("/dashboards/") ? "../" : "";
 
 /** @type {"hearing"|"deaf"|"admin"} */
 let resolvedUserRole = "hearing";
@@ -19,19 +20,19 @@ let resolvedUserRole = "hearing";
 /**
  * @type {{ role: "hearing"|"deaf"|"admin", defaultSection: string }}
  */
-window.__VOICE2SIGN_DASHBOARD__ = window.__VOICE2SIGN_DASHBOARD__ || {
+window.__VOICE_VER_SIGN_DASHBOARD__ = window.__VOICE_VER_SIGN_DASHBOARD__ || {
     role: "hearing",
     defaultSection: "voiceSign",
 };
 
 function getDashboardRuntimeConfig() {
-    return window.__VOICE2SIGN_DASHBOARD__ || { role: "hearing", defaultSection: "voiceSign" };
+    return window.__VOICE_VER_SIGN_DASHBOARD__ || { role: "hearing", defaultSection: "voiceSign" };
 }
 
 async function enforceDashboardRole(pageRole) {
-    /* Admin UI requires a signed-in admin account */
-    if (pageRole === "admin" && !ApiClient.isLoggedIn()) {
-        window.location.replace("../login.html");
+    /* Redirect unauthenticated users unless they are accessing the guest dashboard */
+    if (pageRole !== "guest" && !ApiClient.isLoggedIn()) {
+        window.location.replace(authPathPrefix + "login.html");
         return;
     }
     if (!ApiClient.isLoggedIn()) {
@@ -90,7 +91,7 @@ function updateUserProfileUI() {
                 <span class="user-plan">Click to Log In</span>
             </div>
         `;
-        btn.onclick = () => window.location.href = '../login.html';
+        btn.onclick = () => window.location.href = authPathPrefix + 'login.html';
         if (dropdown) dropdown.style.display = 'none';
         return;
     }
@@ -120,7 +121,12 @@ function updateUserProfileUI() {
                 uHandle = '@' + uData.email.split('@')[0];
             }
             if (uData.avatar) {
-                uAvatarHtml = `<img src="${uData.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+                /* Only accept data: URLs or relative paths to avoid javascript: / vbscript: schemes
+                   and third-party tracking pixels. */
+                const av = String(uData.avatar);
+                if (/^(data:image\/(png|jpeg|jpg|gif|webp|svg\+xml);base64,|\/(?!\/)|[^:\/?#]+$)/i.test(av) && !av.toLowerCase().includes('javascript:')) {
+                    uAvatarHtml = av;
+                }
             }
         }
     } catch (e) { }
@@ -130,13 +136,30 @@ function updateUserProfileUI() {
         uName = 'Administrator';
     }
 
+    /* Render an avatar image safely — never via innerHTML so an attacker
+       who has written to localStorage cannot inject markup. */
+    function setAvatar(container, srcOrNull, fallbackText) {
+        if (!container) return;
+        while (container.firstChild) container.removeChild(container.firstChild);
+        if (srcOrNull) {
+            const img = document.createElement('img');
+            img.src = srcOrNull;
+            img.alt = '';
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.borderRadius = '50%';
+            img.style.objectFit = 'cover';
+            img.referrerPolicy = 'no-referrer';
+            container.appendChild(img);
+        } else if (fallbackText) {
+            container.textContent = fallbackText;
+        }
+    }
+
     // Update Footer Button (Hearing / Deaf)
     const btnAvatar = btn ? btn.querySelector('.user-avatar') : null;
     const btnName = btn ? btn.querySelector('.user-name') : null;
-    if (btnAvatar) {
-        if (uAvatarHtml) btnAvatar.innerHTML = uAvatarHtml;
-        else btnAvatar.textContent = uInitials;
-    }
+    if (btnAvatar) setAvatar(btnAvatar, uAvatarHtml, uInitials);
     if (btnName) btnName.textContent = uName;
 
     // Update Dropdown Menu content
@@ -144,10 +167,7 @@ function updateUserProfileUI() {
         const dropAvatar = dropdown.querySelector('.dropdown-header .user-avatar');
         const dropName = dropdown.querySelector('.dropdown-user-name');
         const dropEmail = dropdown.querySelector('.dropdown-user-email');
-        if (dropAvatar) {
-            if (uAvatarHtml) dropAvatar.innerHTML = uAvatarHtml;
-            else dropAvatar.textContent = uInitials;
-        }
+        if (dropAvatar) setAvatar(dropAvatar, uAvatarHtml, uInitials);
         if (dropName) dropName.textContent = uName;
         if (dropEmail) dropEmail.textContent = uHandle;
     }
@@ -611,6 +631,12 @@ async function sendMessage() {
     const text = input.value.trim();
     if (!text) return;
 
+    /* Defense in depth: cap message length client-side too. The HTML
+       maxlength attribute handles most cases, but a malicious user
+       could remove the attribute or call sendMessage from the console. */
+    const MAX_MESSAGE_LEN = 2000;
+    const safeText = text.length > MAX_MESSAGE_LEN ? text.substring(0, MAX_MESSAGE_LEN) : text;
+
     if (!ApiClient.isLoggedIn()) {
         let guestCount = parseInt(localStorage.getItem('guestMessageCount') || '0', 10);
         // Removed the 3-message guest limit for the test chat presentation
@@ -618,13 +644,13 @@ async function sendMessage() {
     }
 
     removeWelcome();
-    addMessage("user", text);
+    addMessage("user", safeText);
     input.value = "";
 
     // Auto-create a chat if none exists
     if (!currentChatId && ApiClient.isLoggedIn()) {
         try {
-            const res = await ApiClient.createChat(text.substring(0, 40));
+            const res = await ApiClient.createChat(safeText.substring(0, 40));
             if (res?.chat) {
                 currentChatId = res.chat.id;
                 addConversationToList(res.chat);
@@ -637,17 +663,17 @@ async function sendMessage() {
     // Send to backend
     if (currentChatId && ApiClient.isLoggedIn()) {
         try {
-            const res = await ApiClient.sendMessage(currentChatId, text);
+            const res = await ApiClient.sendMessage(currentChatId, safeText);
             if (res?.assistantMessage) {
                 addMessage("assistant", res.assistantMessage.content);
             }
         } catch (e) {
-            addMessage("assistant", `Demo response for: "${text}"`);
+            addMessage("assistant", `Demo response for: "${safeText}"`);
         }
     } else {
         // Test chat for guest user
         const guestResponses = [
-            "Hello! I am Voice2Sign's demo AI. I can show you how translations will look.",
+            "Hello! I am Voice Ver Sign's demo AI. I can show you how translations will look.",
             "That's an interesting point! In the full version, I can translate that into ASL with animations.",
             "I'm currently running in guest mode, so my responses are pre-programmed. Sign up to unlock full capabilities!"
         ];
@@ -694,24 +720,86 @@ function addConversationToList(chat) {
     const list = document.getElementById("chatList");
     if (!list) return;
 
+    const empty = document.getElementById("chatListEmpty");
+    if (empty) empty.remove();
+
     document.querySelectorAll(".chat-item").forEach((i) => i.classList.remove("active"));
 
     const row = document.createElement("div");
     row.className = "chat-item active";
-    row.dataset.chatId = chat.id;
-    row.onclick = function () {
+    row.dataset.chatId = String(chat.id || "");
+
+    const iconNS = "http://www.w3.org/2000/svg";
+    const icon = document.createElementNS(iconNS, "svg");
+    icon.setAttribute("class", "chat-item-icon");
+    icon.setAttribute("fill", "none");
+    icon.setAttribute("stroke", "currentColor");
+    icon.setAttribute("viewBox", "0 0 24 24");
+    const ip = document.createElementNS(iconNS, "path");
+    ip.setAttribute("stroke-linecap", "round");
+    ip.setAttribute("stroke-linejoin", "round");
+    ip.setAttribute("stroke-width", "1.5");
+    ip.setAttribute("d", "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z");
+    icon.appendChild(ip);
+
+    const name = document.createElement("span");
+    name.className = "chat-item-name";
+    name.textContent = chat.title || "New conversation";
+
+    const actions = document.createElement("div");
+    actions.className = "chat-item-actions";
+
+    const pinBtn = document.createElement("button");
+    pinBtn.type = "button";
+    pinBtn.setAttribute("aria-label", "Pin conversation");
+    pinBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        togglePin(pinBtn, row.dataset.chatId);
+    });
+    const pinSvg = document.createElementNS(iconNS, "svg");
+    pinSvg.setAttribute("fill", "none");
+    pinSvg.setAttribute("stroke", "currentColor");
+    pinSvg.setAttribute("viewBox", "0 0 24 24");
+    const pinP = document.createElementNS(iconNS, "path");
+    pinP.setAttribute("stroke-linecap", "round");
+    pinP.setAttribute("stroke-linejoin", "round");
+    pinP.setAttribute("stroke-width", "2");
+    pinP.setAttribute("d", "M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z");
+    pinSvg.appendChild(pinP);
+    pinBtn.appendChild(pinSvg);
+    actions.appendChild(pinBtn);
+
+    const delBtn = document.createElement("button");
+    delBtn.type = "button";
+    delBtn.setAttribute("aria-label", "Delete conversation");
+    delBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        deleteChat(delBtn, row.dataset.chatId);
+    });
+    const delSvg = document.createElementNS(iconNS, "svg");
+    delSvg.setAttribute("fill", "none");
+    delSvg.setAttribute("stroke", "currentColor");
+    delSvg.setAttribute("viewBox", "0 0 24 24");
+    const delP = document.createElementNS(iconNS, "path");
+    delP.setAttribute("stroke-linecap", "round");
+    delP.setAttribute("stroke-linejoin", "round");
+    delP.setAttribute("stroke-width", "2");
+    delP.setAttribute("d", "M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16");
+    delSvg.appendChild(delP);
+    delBtn.appendChild(delSvg);
+    actions.appendChild(delBtn);
+
+    row.appendChild(icon);
+    row.appendChild(name);
+    row.appendChild(actions);
+
+    row.addEventListener("click", () => {
         document.querySelectorAll(".chat-item").forEach((i) => i.classList.remove("active"));
-        this.classList.add("active");
+        row.classList.add("active");
         showSection("chat");
-        loadChat(chat.id);
-    };
-    row.innerHTML = `
-        <svg class="chat-item-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-        <span class="chat-item-name">${chat.title || "New conversation"}</span>
-        <div class="chat-item-actions">
-            <button onclick="event.stopPropagation();togglePin(this,'${chat.id}')" aria-label="Pin"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg></button>
-            <button onclick="event.stopPropagation();deleteChat(this,'${chat.id}')" aria-label="Delete"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
-        </div>`;
+        loadChat(row.dataset.chatId);
+    });
+
     list.prepend(row);
 }
 
@@ -885,7 +973,7 @@ function signOutApp() {
     }
     Toast.info("Signed out.");
     setTimeout(() => {
-        window.location.href = "../login.html";
+        window.location.href = authPathPrefix + "login.html";
     }, 400);
 }
 
@@ -933,7 +1021,7 @@ async function pipelineVerifyVisionBackend() {
         pill.textContent = "Server offline — run: python app.py";
         pill.classList.add("error");
         pipelineSignVoiceStatusNote(
-            "Cannot reach the API. Start the server from the voice2sign folder: python app.py — then open http://127.0.0.1:5000 (not a file:// URL)."
+            "Cannot reach the API. Start the server from the voice_ver_sign folder: python app.py — then open http://127.0.0.1:5000 (not a file:// URL)."
         );
         return false;
     }
@@ -1473,11 +1561,49 @@ document.addEventListener("DOMContentLoaded", async () => {
     applyPrefsVisuals(loadedPrefs);
 
     // Load chat history
+    const list = document.getElementById("chatList");
+    if (list) {
+        /* Show a friendly empty state until chats arrive, then replace
+           it with the real items. */
+        if (!list.firstElementChild) {
+            const empty = document.createElement("div");
+            empty.className = "empty-state";
+            empty.id = "chatListEmpty";
+            const emptyIcon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            emptyIcon.setAttribute("class", "empty-state-icon");
+            emptyIcon.setAttribute("fill", "none");
+            emptyIcon.setAttribute("stroke", "currentColor");
+            emptyIcon.setAttribute("viewBox", "0 0 24 24");
+            emptyIcon.setAttribute("aria-hidden", "true");
+            const eip = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            eip.setAttribute("stroke-linecap", "round");
+            eip.setAttribute("stroke-linejoin", "round");
+            eip.setAttribute("stroke-width", "1.5");
+            eip.setAttribute("d", "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z");
+            emptyIcon.appendChild(eip);
+            empty.appendChild(emptyIcon);
+            const t = document.createElement("div");
+            t.className = "empty-state-title";
+            t.textContent = "No conversations yet";
+            empty.appendChild(t);
+            const s = document.createElement("div");
+            s.className = "empty-state-text";
+            s.textContent = "Start a new chat from the button above.";
+            empty.appendChild(s);
+            list.appendChild(empty);
+        }
+    }
     if (ApiClient.isLoggedIn()) {
         try {
             const res = await ApiClient.getChats();
             if (res?.chats) {
-                res.chats.reverse().forEach((chat) => addConversationToList(chat));
+                if (res.chats.length === 0) {
+                    /* keep the empty state */
+                } else {
+                    const empty = document.getElementById("chatListEmpty");
+                    if (empty) empty.remove();
+                    res.chats.reverse().forEach((chat) => addConversationToList(chat));
+                }
             }
         } catch (e) {
             console.warn("Could not load chats:", e);

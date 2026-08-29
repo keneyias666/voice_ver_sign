@@ -1,5 +1,5 @@
 /**
- * Voice2Sign - Admin Dashboard Charts
+ * Voice Ver Sign - Admin Dashboard Charts
  * Replicates the "Maxton" dashboard graphs using Chart.js
  */
 
