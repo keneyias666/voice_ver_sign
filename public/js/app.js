@@ -1,5 +1,5 @@
 /**
- * Voice Ver Sign – App Utilities
+ * VoiceVerSign – App Utilities
  * Theme management, toast system, and shared helpers.
  */
 
@@ -16,6 +16,14 @@ const ThemeManager = {
         document.documentElement.setAttribute("data-theme", theme);
         localStorage.setItem("theme", theme);
         this.updateIcons(theme);
+        this.updateSwitch(theme);
+    },
+
+    updateSwitch(theme) {
+        const inputs = document.querySelectorAll(".theme-switch__input");
+        inputs.forEach((input) => {
+            input.checked = theme === "dark";
+        });
     },
 
     toggle() {

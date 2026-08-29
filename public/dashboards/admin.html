@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice Ver Sign — Admin Dashboard</title>
-    <meta name="description" content="Voice Ver Sign Admin & Analytics">
+    <title>VoiceVerSign — Admin Dashboard</title>
+    <meta name="description" content="VoiceVerSign Admin & Analytics">
     <meta name="theme-color" content="#0d0d14" media="(prefers-color-scheme: dark)">
     <meta name="theme-color" content="#f4f4f5" media="(prefers-color-scheme: light)">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -23,10 +23,10 @@
 
     <!-- ── SIDEBAR ── -->
     <aside class="maxton-sidebar">
-        <div class="maxton-brand" style="justify-content: center;">
-            <img src="../images/transparent-logo.png" style="width:24px;height:24px;" alt="Voice Ver Sign"
+        <a href="/index.html#home" class="maxton-brand" style="justify-content: center; text-decoration: none;" title="Home">
+            <img src="../images/transparent-logo.png" style="width:24px;height:24px;" alt="VoiceVerSign"
                 onerror="this.style.display='none'">
-        </div>
+        </a>
         
         <div class="maxton-menu" style="display: flex; flex-direction: column; flex: 1;">
             <div class="maxton-menu-group" style="margin-top: 12px;">
@@ -103,13 +103,7 @@
             </div>
 
             <div class="maxton-top-actions">
-                <button class="maxton-icon-btn theme-toggle-control" onclick="toggleTheme(event)"
-                    aria-label="Toggle dark or light theme">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
-                        <path data-theme-icon stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                    </svg>
-                </button>
+                <span class="maxton-top-hint" title="Theme switch is at the bottom-left of the page">🌗 bottom-left</span>
                 <div style="position:relative; display:inline-block;" id="langDropdownWrap">
                     <button class="maxton-icon-btn"
                         onclick="document.getElementById('langDropdown').classList.toggle('show')">
@@ -540,7 +534,7 @@
                 </svg>
                 <h2 id="placeholderTitle" style="margin-bottom: 8px;">Section Content</h2>
                 <p style="color: var(--text-secondary); max-width: 400px;">This module will display detailed insights
-                    and management utilities once connected to the deeper Voice Ver Sign backend services.</p>
+                    and management utilities once connected to the deeper VoiceVerSign backend services.</p>
             </div>
         </div>
 
@@ -951,6 +945,28 @@
             }
         });
     </script>
+
+    <!-- ── BOTTOM-LEFT THEME SWITCH ── -->
+    <label class="theme-switch theme-switch--floating theme-toggle-control" title="Toggle theme"
+        aria-label="Toggle dark or light theme">
+        <input type="checkbox" class="theme-switch__input" onchange="toggleTheme(event)">
+        <span class="theme-switch__track">
+            <span class="theme-switch__indicator"></span>
+            <span class="theme-switch__knob">
+                <svg class="theme-switch__icon theme-switch__icon--sun" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    aria-hidden="true">
+                    <circle cx="12" cy="12" r="4" />
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+                </svg>
+                <svg class="theme-switch__icon theme-switch__icon--moon" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    aria-hidden="true">
+                    <path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </span>
+        </span>
+    </label>
 </body>
 
 </html>

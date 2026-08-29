@@ -1,5 +1,5 @@
 /* 
- * Voice Ver Sign - Maxton Admin Dashboard Theme 
+ * VoiceVerSign - Maxton Admin Dashboard Theme 
  * Exact dark-theme replica of the provided dashboard reference.
  */
 
@@ -66,12 +66,14 @@ a {
     height: 100vh;
     position: sticky;
     top: 0;
-    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-left: 0;
+    transform: translateX(0);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .maxton-sidebar.collapsed {
     margin-left: -260px;
-    /* Hide sidebar completely by shifting it left */
+    transform: translateX(-100%);
 }
 
 /* On smaller screens, the sidebar floats above content and is hidden by default. If it has .collapsed, we hide it.
@@ -175,8 +177,8 @@ Wait, if users open it, we should remove .collapsed. */
 }
 
 .maxton-menu-item.active {
-    border-left: 3px solid var(--maxton-cyan);
-    border-radius: 0 8px 8px 0;
+    background-color: rgba(34, 211, 238, 0.12);
+    color: var(--maxton-cyan);
 }
 
 .maxton-menu-item svg {

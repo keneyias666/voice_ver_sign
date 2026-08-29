@@ -1,5 +1,5 @@
 /**
-* Voice Ver Sign – Shared dashboard logic (used by `dashboards/hearing.html`, `deaf.html`, `admin.html`).
+* VoiceVerSign – Shared dashboard logic (used by `dashboards/hearing.html`, `deaf.html`, `admin.html`).
  * Each page loads `js/dashboard-<role>.js` first to set `window.__VOICE_VER_SIGN_DASHBOARD__`, then this file.
  */
 
@@ -673,7 +673,7 @@ async function sendMessage() {
     } else {
         // Test chat for guest user
         const guestResponses = [
-            "Hello! I am Voice Ver Sign's demo AI. I can show you how translations will look.",
+            "Hello! I am VoiceVerSign's demo AI. I can show you how translations will look.",
             "That's an interesting point! In the full version, I can translate that into ASL with animations.",
             "I'm currently running in guest mode, so my responses are pre-programmed. Sign up to unlock full capabilities!"
         ];

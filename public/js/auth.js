@@ -1,5 +1,5 @@
 /**
- * Voice Ver Sign – Auth Page Logic
+ * VoiceVerSign – Auth Page Logic
  * Login, signup, and forgot-password handlers.
  */
 

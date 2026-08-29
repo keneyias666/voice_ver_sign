@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice Ver Sign — Hearing dashboard</title>
-    <meta name="description" content="Voice Ver Sign — Voice → Sign first for hearing users.">
+    <title>VoiceVerSign — Hearing dashboard</title>
+    <meta name="description" content="VoiceVerSign — Voice → Sign first for hearing users.">
     <meta name="theme-color" content="#0d0d14" media="(prefers-color-scheme: dark)">
     <meta name="theme-color" content="#f4f4f5" media="(prefers-color-scheme: light)">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -22,9 +22,9 @@
         <!-- ── Sidebar ── -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <a href="hearing.html" class="sidebar-logo" title="Home — hearing dashboard" onclick="event.preventDefault(); showSection('voiceSign'); window.scrollTo(0,0); return false;">
-                    <img src="../images/transparent-logo.svg" alt="Voice Ver Sign" onerror="this.style.display='none'">
-                    <span class="sidebar-logo-text">Voice Ver Sign</span>
+                <a href="/index.html#home" class="sidebar-logo" title="Home">
+                    <img src="../images/transparent-logo.svg" alt="VoiceVerSign" onerror="this.style.display='none'">
+                    <span class="sidebar-logo-text">VoiceVerSign</span>
                 </a>
                 <button type="button" class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -97,9 +97,9 @@
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="dropdown-item-arrow" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </button>
                 <div class="dropdown-divider"></div>
-                <button class="dropdown-item theme-toggle-control" onclick="toggleTheme(event)">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path data-theme-icon stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-                    Toggle theme
+                <button class="dropdown-item" disabled title="Theme switch is at the bottom-left of the page">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    Theme (use bottom-left switch)
                 </button>
                 <button class="dropdown-item" onclick="signOutApp()">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
@@ -329,7 +329,7 @@
             <div class="section-panel section-hidden" id="preferencesPanel">
                 <div class="panel-header" style="margin-bottom:24px;">
                     <h2 class="panel-title" style="font-size:24px; font-weight:600;">Preferences</h2>
-                    <p class="panel-subtitle" style="color:var(--text-secondary);">Customize your Voice Ver Sign experience</p>
+                    <p class="panel-subtitle" style="color:var(--text-secondary);">Customize your VoiceVerSign experience</p>
                 </div>
                 <div class="panel-card" style="margin-bottom:24px; padding:20px; border:1px solid var(--border); border-radius:12px; background:var(--bg-elevated);">
                     <label class="pref-row"><span>Auto-play translation responses</span><input type="checkbox" id="prefAutoplay" class="toggle-check"></label>
@@ -430,12 +430,12 @@
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                         </button>
                     </div>
-                    <input id="composerInput" class="composer-input" type="text" placeholder="Message Voice Ver Sign..." maxlength="2000" autocomplete="off" aria-label="Message composer">
+                    <input id="composerInput" class="composer-input" type="text" placeholder="Message VoiceVerSign..." maxlength="2000" autocomplete="off" aria-label="Message composer">
                     <button class="send-btn" onclick="sendMessage()" aria-label="Send message">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
                     </button>
                 </div>
-                <p class="composer-hint">Voice Ver Sign can make mistakes. Verify important translations.</p>
+                <p class="composer-hint">VoiceVerSign can make mistakes. Verify important translations.</p>
             </footer>
 
         </section>
@@ -537,5 +537,27 @@
             }
         });
     </script>
+
+    <!-- ── BOTTOM-LEFT THEME SWITCH ── -->
+    <label class="theme-switch theme-switch--floating theme-toggle-control" title="Toggle theme"
+        aria-label="Toggle dark or light theme">
+        <input type="checkbox" class="theme-switch__input" onchange="toggleTheme(event)">
+        <span class="theme-switch__track">
+            <span class="theme-switch__indicator"></span>
+            <span class="theme-switch__knob">
+                <svg class="theme-switch__icon theme-switch__icon--sun" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    aria-hidden="true">
+                    <circle cx="12" cy="12" r="4" />
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+                </svg>
+                <svg class="theme-switch__icon theme-switch__icon--moon" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    aria-hidden="true">
+                    <path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </span>
+        </span>
+    </label>
 </body>
 </html>

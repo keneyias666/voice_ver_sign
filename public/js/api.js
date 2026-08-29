@@ -1,5 +1,5 @@
 /**
- * Voice Ver Sign – API client (same-origin only).
+ * VoiceVerSign – API client (same-origin only).
  * API base URL and WebSocket endpoints are NOT user-configurable in the browser
  * (secrets and server routing belong on the server / reverse proxy).
  */

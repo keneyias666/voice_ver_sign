@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice Ver Sign - Welcome</title>
+    <title>VoiceVerSign - Welcome</title>
     <meta name="description"
-        content="Voice Ver Sign - AI-powered speech to sign language translation. Break communication barriers.">
+        content="VoiceVerSign - AI-powered speech to sign language translation. Break communication barriers.">
     <meta name="theme-color" content="#0d0d14" media="(prefers-color-scheme: dark)">
     <meta name="theme-color" content="#f4f4f5" media="(prefers-color-scheme: light)">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
@@ -27,18 +27,9 @@
 
     <header class="auth-header">
         <a href="index.html" class="auth-logo">
-            <img src="images/transparent-logo.svg" alt="Voice Ver Sign" onerror="this.style.display='none'">
-            <span class="auth-logo-text">Voice Ver Sign</span>
+            <img src="images/transparent-logo.svg" alt="VoiceVerSign" onerror="this.style.display='none'">
+            <span class="auth-logo-text">VoiceVerSign</span>
         </a>
-        <div class="auth-header-actions">
-            <button type="button" class="icon-btn theme-toggle-control" onclick="toggleTheme(event)"
-                aria-label="Toggle dark or light theme">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path data-theme-icon stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                </svg>
-            </button>
-        </div>
     </header>
 
     <main class="auth-body" style="gap: 8vw; flex-wrap: wrap; padding: 24px 5vw;">
@@ -50,7 +41,7 @@
                 <span
                     style="display:inline-block; width:8px; height:8px; background:#e0b694; border-radius:50%; box-shadow: 0 0 10px #e0b694;"></span>
                 <span
-                    style="font-size:13px; font-weight:600; color:rgba(255,255,255,0.9); letter-spacing:1px; text-transform:uppercase;">Voice Ver Sign</span>
+                    style="font-size:13px; font-weight:600; color:rgba(255,255,255,0.9); letter-spacing:1px; text-transform:uppercase;">VoiceVerSign</span>
             </div>
             <h1
                 style="font-size: 56px; font-weight: 800; margin-bottom: 24px; line-height: 1.1; letter-spacing: -1.5px; color: white;">
@@ -67,7 +58,7 @@
 
         <div class="auth-card" style="position:relative; z-index:1;">
             <div class="auth-card-header">
-                <img src="images/transparent-logo.svg" alt="Voice Ver Sign" class="auth-card-logo"
+                <img src="images/transparent-logo.svg" alt="VoiceVerSign" class="auth-card-logo"
                     onerror="this.style.display='none'">
                 <h1 class="auth-card-title">Welcome back</h1>
                 <p class="auth-card-subtitle">Sign in to continue translating</p>
@@ -186,6 +177,28 @@
                 .catch(function () { /* dev mode is off */ });
         })();
     </script>
+
+    <!-- ── BOTTOM-LEFT THEME SWITCH ── -->
+    <label class="theme-switch theme-switch--floating theme-toggle-control" title="Toggle theme"
+        aria-label="Toggle dark or light theme">
+        <input type="checkbox" class="theme-switch__input" onchange="toggleTheme(event)">
+        <span class="theme-switch__track">
+            <span class="theme-switch__indicator"></span>
+            <span class="theme-switch__knob">
+                <svg class="theme-switch__icon theme-switch__icon--sun" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    aria-hidden="true">
+                    <circle cx="12" cy="12" r="4" />
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+                </svg>
+                <svg class="theme-switch__icon theme-switch__icon--moon" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    aria-hidden="true">
+                    <path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </span>
+        </span>
+    </label>
 </body>
 
 </html>

@@ -4,17 +4,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice Ver Sign — AI Sign Language Workspace</title>
+    <title>VoiceVerSign — AI Sign Language Workspace</title>
     <meta name="description"
-        content="Voice Ver Sign — Professional Speech to Sign Language Translation Workspace. Ready for AI, LLM, and ML integrations.">
+        content="VoiceVerSign — Professional Speech to Sign Language Translation Workspace. Ready for AI, LLM, and ML integrations.">
     <meta name="theme-color" content="#0d0d14" media="(prefers-color-scheme: dark)">
     <meta name="theme-color" content="#f4f4f5" media="(prefers-color-scheme: light)">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
     <meta http-equiv="Permissions-Policy" content="geolocation=(), microphone=(self), camera=(self), payment=(), usb=()">
     <link rel="icon" type="image/png" href="images/transparent-logo.svg">
-    <link rel="stylesheet" href="css/styles.css?v=20260830">
-    <link rel="stylesheet" href="css/dashboard-hearing.css">
+    <link rel="stylesheet" href="css/styles.css?v=20260830b">
     <style>
         /* Smooth scrolling behavior for navigation links */
         html {
@@ -30,26 +29,14 @@
 
 <body class="portal-page">
 
-    <div class="portal-bg" aria-hidden="true">
-        <div class="portal-bg__gradient"></div>
-        <div class="portal-bg__blob portal-bg__blob--1"></div>
-        <div class="portal-bg__blob portal-bg__blob--2"></div>
-        <div class="portal-bg__mural"></div>
-        <div class="portal-bg__logos">
-            <img src="images/transparent-logo.svg" class="portal-bg__logo portal-bg__logo--1" alt="">
-            <img src="images/transparent-logo.svg" class="portal-bg__logo portal-bg__logo--2" alt="">
-            <img src="images/transparent-logo.svg" class="portal-bg__logo portal-bg__logo--3" alt="">
-        </div>
-    </div>
-
     <a class="skip-link" href="#home">Skip to content</a>
 
-    <!-- ── STICKY GLASSMORPHIC NAVIGATION BAR ── -->
+    <!-- ── TOP NAVIGATION BAR ── -->
     <nav class="sticky-nav" aria-label="Primary">
         <div class="nav-container">
             <a href="#home" class="nav-logo">
-                <img src="images/transparent-logo.svg" alt="Voice Ver Sign Logo">
-                <span>Voice Ver Sign</span>
+                <img src="images/transparent-logo.svg" alt="VoiceVerSign Logo">
+                <span>VoiceVerSign</span>
             </a>
             <div class="nav-links">
                 <a href="#home" class="nav-link">HOME</a>
@@ -61,13 +48,6 @@
                 <a href="dashboards/guest.html" class="nav-link nav-link--accent">WORKSPACE</a>
             </div>
             <div class="nav-auth">
-                <button type="button" class="nav-theme-btn theme-toggle-control" onclick="toggleTheme(event)"
-                    aria-label="Toggle dark or light theme" title="Toggle theme">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-                        <path data-theme-icon stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                    </svg>
-                </button>
                 <a href="login.html" class="pipeline-btn-secondary" style="text-decoration: none;">Log In</a>
                 <a href="signup.html" class="pipeline-btn-primary" style="text-decoration: none;">Sign Up</a>
             </div>
@@ -106,7 +86,7 @@
             <span class="section-tag">Our Mission</span>
             <h2 class="section-title" id="about-title">Breaking Communication Barriers</h2>
             <p class="section-desc">
-                We believe accessibility is a fundamental right. Voice Ver Sign provides a lightweight, highly extensible
+                We believe accessibility is a fundamental right. VoiceVerSign provides a lightweight, highly extensible
                 platform designed to connect hearing, Deaf, and Hard-of-Hearing individuals through advanced technology.
             </p>
             <div class="card-grid">
@@ -215,44 +195,264 @@
             <p class="section-desc">
                 Choose the pricing tier that best fits your translation scale. Upgrade anytime.
             </p>
-            <div class="pricing-cards">
-                <div class="pricing-card">
-                    <h3 class="tier-name">Free</h3>
-                    <div class="tier-price">$0 <span>/ month</span></div>
-                    <p class="tier-desc">Perfect for testing the interface and basic offline translations.</p>
-                    <ul class="tier-features">
-                        <li>Basic offline translations</li>
-                        <li>Standard text chat panel</li>
-                        <li>Standard resolution camera</li>
-                    </ul>
-                    <button class="pipeline-btn-secondary tier-btn" onclick="openPricingModal('Free')">Current
-                        Plan</button>
+            <div class="pricing-cards pricing-cards--uiverse">
+                <!-- ── FREE ── -->
+                <div class="uiverse-card">
+                    <div class="uiverse-card__pattern-grid"></div>
+                    <div class="uiverse-card__overlay-dots"></div>
+                    <div class="uiverse-card__bold-pattern">
+                        <svg viewBox="0 0 100 100" aria-hidden="true">
+                            <path stroke-dasharray="15 10" stroke-width="10" stroke="currentColor" fill="none"
+                                d="M0,0 L100,0 L100,100 L0,100 Z"></path>
+                        </svg>
+                    </div>
+                    <div class="uiverse-card__title-area">
+                        <span>Starter</span>
+                        <span class="uiverse-card__tag">Free</span>
+                    </div>
+                    <div class="uiverse-card__body">
+                        <div class="uiverse-card__description">
+                            Perfect for testing the interface and basic offline translations.
+                        </div>
+                        <div class="feature-grid">
+                            <div class="feature-item">
+                                <div class="feature-icon">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path
+                                            d="M20,4C21.1,4 22,4.9 22,6V18C22,19.1 21.1,20 20,20H4C2.9,20 2,19.1 2,18V6C2,4.9 2.9,4 4,4H20M4,6V18H20V6H4M6,9H18V11H6V9M6,13H16V15H6V13Z" />
+                                    </svg>
+                                </div>
+                                <span class="feature-text">Basic translations</span>
+                            </div>
+                            <div class="feature-item">
+                                <div class="feature-icon">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path
+                                            d="M12,17.56L16.07,16.43L16.62,10.33H9.38L9.2,8.3H16.8L17,6.31H7L7.56,12.32H14.45L14.22,14.9L12,15.5L9.78,14.9L9.64,13.24H7.64L7.93,16.43L12,17.56M4.07,3H19.93L18.5,19.2L12,21L5.5,19.2L4.07,3Z" />
+                                    </svg>
+                                </div>
+                                <span class="feature-text">Standard chat</span>
+                            </div>
+                            <div class="feature-item">
+                                <div class="feature-icon">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path
+                                            d="M18.5,4L19.66,8.35L18.7,8.61C18.25,7.74 17.79,6.87 17.26,6.43C16.73,6 16.11,6 15.5,6H13V16.5C13,17 13,17.5 13.33,17.75C13.67,18 14.33,18 15,18V19H9V18C9.67,18 10.33,18 10.67,17.75C11,17.5 11,17 11,16.5V6H8.5C7.89,6 7.27,6 6.74,6.43C6.21,6.87 5.75,7.74 5.3,8.61L4.34,8.35L5.5,4H18.5Z" />
+                                    </svg>
+                                </div>
+                                <span class="feature-text">SD camera</span>
+                            </div>
+                            <div class="feature-item">
+                                <div class="feature-icon">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path
+                                            d="M9.19,6.35C8.41,7.13 7.75,8.05 7.25,9H5V11H7.12C7.05,11.32 7,11.66 7,12C7,12.34 7.05,12.68 7.12,13H5V15H7.25C7.75,15.95 8.41,16.87 9.19,17.65L7.77,19.07L9.88,21.18L11.3,19.77C11.85,20.03 12.41,20.2 13,20.31V23H15V20.31C15.59,20.2 16.15,20.03 16.7,19.77L18.12,21.18L20.23,19.07L18.81,17.65C19.59,16.87 20.25,15.95 20.75,15H23V13H20.88C20.95,12.68 21,12.34 21,12C21,11.66 20.95,11.32 20.88,11H23V9H20.75C20.25,8.05 19.59,7.13 18.81,6.35L20.23,4.93L18.12,2.82L16.7,4.23C16.15,3.97 15.59,3.8 15,3.69V1H13V3.69C12.41,3.8 11.85,3.97 11.3,4.23L9.88,2.82L7.77,4.93L9.19,6.35M13,17A5,5 0 0,1 8,12A5,5 0 0,1 13,7A5,5 0 0,1 18,12A5,5 0 0,1 13,17Z" />
+                                    </svg>
+                                </div>
+                                <span class="feature-text">No support SLA</span>
+                            </div>
+                        </div>
+                        <div class="uiverse-card__actions">
+                            <div class="uiverse-price">
+                                <span class="uiverse-price__currency">$</span>0
+                                <span class="uiverse-price__period">per month</span>
+                            </div>
+                            <button class="uiverse-card__button" onclick="openPricingModal('Free')">Current Plan</button>
+                        </div>
+                    </div>
+                    <div class="uiverse-card__dots-pattern">
+                        <svg viewBox="0 0 80 40" aria-hidden="true">
+                            <circle fill="currentColor" r="3" cy="10" cx="10"></circle>
+                            <circle fill="currentColor" r="3" cy="10" cx="30"></circle>
+                            <circle fill="currentColor" r="3" cy="10" cx="50"></circle>
+                            <circle fill="currentColor" r="3" cy="10" cx="70"></circle>
+                            <circle fill="currentColor" r="3" cy="20" cx="20"></circle>
+                            <circle fill="currentColor" r="3" cy="20" cx="40"></circle>
+                            <circle fill="currentColor" r="3" cy="20" cx="60"></circle>
+                            <circle fill="currentColor" r="3" cy="30" cx="10"></circle>
+                            <circle fill="currentColor" r="3" cy="30" cx="30"></circle>
+                            <circle fill="currentColor" r="3" cy="30" cx="50"></circle>
+                            <circle fill="currentColor" r="3" cy="30" cx="70"></circle>
+                        </svg>
+                    </div>
+                    <div class="uiverse-card__accent-shape"></div>
+                    <div class="uiverse-card__corner-slice"></div>
+                    <div class="uiverse-card__stamp">
+                        <span class="uiverse-card__stamp-text">Starter</span>
+                    </div>
                 </div>
-                <div class="pricing-card pro-tier">
-                    <h3 class="tier-name">Pro</h3>
-                    <div class="tier-price">$9.99 <span>/ month</span></div>
-                    <p class="tier-desc">Ideal for daily interactions, unlocking file and image attachments.</p>
-                    <ul class="tier-features">
-                        <li>File & image attachments</li>
-                        <li>Extended model contexts</li>
-                        <li>Priority API queuing</li>
-                        <li>Custom user profile logs</li>
-                    </ul>
-                    <button class="pipeline-btn-primary tier-btn" onclick="openPricingModal('Pro')">Upgrade to
-                        Pro</button>
+
+                <!-- ── PRO ── -->
+                <div class="uiverse-card uiverse-card--featured">
+                    <div class="uiverse-card__pattern-grid"></div>
+                    <div class="uiverse-card__overlay-dots"></div>
+                    <div class="uiverse-card__bold-pattern">
+                        <svg viewBox="0 0 100 100" aria-hidden="true">
+                            <path stroke-dasharray="15 10" stroke-width="10" stroke="currentColor" fill="none"
+                                d="M0,0 L100,0 L100,100 L0,100 Z"></path>
+                        </svg>
+                    </div>
+                    <div class="uiverse-card__title-area">
+                        <span>Pro</span>
+                        <span class="uiverse-card__tag">Popular</span>
+                    </div>
+                    <div class="uiverse-card__body">
+                        <div class="uiverse-card__description">
+                            Ideal for daily interactions, unlocking file and image attachments with priority API
+                            queuing.
+                        </div>
+                        <div class="feature-grid">
+                            <div class="feature-item">
+                                <div class="feature-icon">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path
+                                            d="M20,4C21.1,4 22,4.9 22,6V18C22,19.1 21.1,20 20,20H4C2.9,20 2,19.1 2,18V6C2,4.9 2.9,4 4,4H20M4,6V18H20V6H4M6,9H18V11H6V9M6,13H16V15H6V13Z" />
+                                    </svg>
+                                </div>
+                                <span class="feature-text">File & image uploads</span>
+                            </div>
+                            <div class="feature-item">
+                                <div class="feature-icon">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path
+                                            d="M12,17.56L16.07,16.43L16.62,10.33H9.38L9.2,8.3H16.8L17,6.31H7L7.56,12.32H14.45L14.22,14.9L12,15.5L9.78,14.9L9.64,13.24H7.64L7.93,16.43L12,17.56M4.07,3H19.93L18.5,19.2L12,21L5.5,19.2L4.07,3Z" />
+                                    </svg>
+                                </div>
+                                <span class="feature-text">Extended contexts</span>
+                            </div>
+                            <div class="feature-item">
+                                <div class="feature-icon">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path
+                                            d="M18.5,4L19.66,8.35L18.7,8.61C18.25,7.74 17.79,6.87 17.26,6.43C16.73,6 16.11,6 15.5,6H13V16.5C13,17 13,17.5 13.33,17.75C13.67,18 14.33,18 15,18V19H9V18C9.67,18 10.33,18 10.67,17.75C11,17.5 11,17 11,16.5V6H8.5C7.89,6 7.27,6 6.74,6.43C6.21,6.87 5.75,7.74 5.3,8.61L4.34,8.35L5.5,4H18.5Z" />
+                                    </svg>
+                                </div>
+                                <span class="feature-text">Priority API</span>
+                            </div>
+                            <div class="feature-item">
+                                <div class="feature-icon">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path
+                                            d="M9.19,6.35C8.41,7.13 7.75,8.05 7.25,9H5V11H7.12C7.05,11.32 7,11.66 7,12C7,12.34 7.05,12.68 7.12,13H5V15H7.25C7.75,15.95 8.41,16.87 9.19,17.65L7.77,19.07L9.88,21.18L11.3,19.77C11.85,20.03 12.41,20.2 13,20.31V23H15V20.31C15.59,20.2 16.15,20.03 16.7,19.77L18.12,21.18L20.23,19.07L18.81,17.65C19.59,16.87 20.25,15.95 20.75,15H23V13H20.88C20.95,12.68 21,12.34 21,12C21,11.66 20.95,11.32 20.88,11H23V9H20.75C20.25,8.05 19.59,7.13 18.81,6.35L20.23,4.93L18.12,2.82L16.7,4.23C16.15,3.97 15.59,3.8 15,3.69V1H13V3.69C12.41,3.8 11.85,3.97 11.3,4.23L9.88,2.82L7.77,4.93L9.19,6.35M13,17A5,5 0 0,1 8,12A5,5 0 0,1 13,7A5,5 0 0,1 18,12A5,5 0 0,1 13,17Z" />
+                                    </svg>
+                                </div>
+                                <span class="feature-text">Custom profile logs</span>
+                            </div>
+                        </div>
+                        <div class="uiverse-card__actions">
+                            <div class="uiverse-price">
+                                <span class="uiverse-price__currency">$</span>9.99
+                                <span class="uiverse-price__period">per month</span>
+                            </div>
+                            <button class="uiverse-card__button" onclick="openPricingModal('Pro')">Upgrade to Pro</button>
+                        </div>
+                    </div>
+                    <div class="uiverse-card__dots-pattern">
+                        <svg viewBox="0 0 80 40" aria-hidden="true">
+                            <circle fill="currentColor" r="3" cy="10" cx="10"></circle>
+                            <circle fill="currentColor" r="3" cy="10" cx="30"></circle>
+                            <circle fill="currentColor" r="3" cy="10" cx="50"></circle>
+                            <circle fill="currentColor" r="3" cy="10" cx="70"></circle>
+                            <circle fill="currentColor" r="3" cy="20" cx="20"></circle>
+                            <circle fill="currentColor" r="3" cy="20" cx="40"></circle>
+                            <circle fill="currentColor" r="3" cy="20" cx="60"></circle>
+                            <circle fill="currentColor" r="3" cy="30" cx="10"></circle>
+                            <circle fill="currentColor" r="3" cy="30" cx="30"></circle>
+                            <circle fill="currentColor" r="3" cy="30" cx="50"></circle>
+                            <circle fill="currentColor" r="3" cy="30" cx="70"></circle>
+                        </svg>
+                    </div>
+                    <div class="uiverse-card__accent-shape"></div>
+                    <div class="uiverse-card__corner-slice"></div>
+                    <div class="uiverse-card__stamp">
+                        <span class="uiverse-card__stamp-text">Popular</span>
+                    </div>
                 </div>
-                <div class="pricing-card">
-                    <h3 class="tier-name">Ultra</h3>
-                    <div class="tier-price">$19.99 <span>/ month</span></div>
-                    <p class="tier-desc">Unlock advanced AI relays and real-time custom sequence networks.</p>
-                    <ul class="tier-features">
-                        <li>Unlimited file & audio uploads</li>
-                        <li>Access to premium LLM feeds</li>
-                        <li>24/7 dedicated support</li>
-                        <li>Advanced avatar custom animations</li>
-                    </ul>
-                    <button class="pipeline-btn-primary tier-btn" onclick="openPricingModal('Ultra')">Upgrade to
-                        Ultra</button>
+
+                <!-- ── ULTRA ── -->
+                <div class="uiverse-card">
+                    <div class="uiverse-card__pattern-grid"></div>
+                    <div class="uiverse-card__overlay-dots"></div>
+                    <div class="uiverse-card__bold-pattern">
+                        <svg viewBox="0 0 100 100" aria-hidden="true">
+                            <path stroke-dasharray="15 10" stroke-width="10" stroke="currentColor" fill="none"
+                                d="M0,0 L100,0 L100,100 L0,100 Z"></path>
+                        </svg>
+                    </div>
+                    <div class="uiverse-card__title-area">
+                        <span>Ultra</span>
+                        <span class="uiverse-card__tag">Premium</span>
+                    </div>
+                    <div class="uiverse-card__body">
+                        <div class="uiverse-card__description">
+                            Unlock advanced AI relays, premium LLM feeds, and 24/7 dedicated support.
+                        </div>
+                        <div class="feature-grid">
+                            <div class="feature-item">
+                                <div class="feature-icon">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path
+                                            d="M20,4C21.1,4 22,4.9 22,6V18C22,19.1 21.1,20 20,20H4C2.9,20 2,19.1 2,18V6C2,4.9 2.9,4 4,4H20M4,6V18H20V6H4M6,9H18V11H6V9M6,13H16V15H6V13Z" />
+                                    </svg>
+                                </div>
+                                <span class="feature-text">Unlimited uploads</span>
+                            </div>
+                            <div class="feature-item">
+                                <div class="feature-icon">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path
+                                            d="M12,17.56L16.07,16.43L16.62,10.33H9.38L9.2,8.3H16.8L17,6.31H7L7.56,12.32H14.45L14.22,14.9L12,15.5L9.78,14.9L9.64,13.24H7.64L7.93,16.43L12,17.56M4.07,3H19.93L18.5,19.2L12,21L5.5,19.2L4.07,3Z" />
+                                    </svg>
+                                </div>
+                                <span class="feature-text">Premium LLM feeds</span>
+                            </div>
+                            <div class="feature-item">
+                                <div class="feature-icon">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path
+                                            d="M18.5,4L19.66,8.35L18.7,8.61C18.25,7.74 17.79,6.87 17.26,6.43C16.73,6 16.11,6 15.5,6H13V16.5C13,17 13,17.5 13.33,17.75C13.67,18 14.33,18 15,18V19H9V18C9.67,18 10.33,18 10.67,17.75C11,17.5 11,17 11,16.5V6H8.5C7.89,6 7.27,6 6.74,6.43C6.21,6.87 5.75,7.74 5.3,8.61L4.34,8.35L5.5,4H18.5Z" />
+                                    </svg>
+                                </div>
+                                <span class="feature-text">24/7 support</span>
+                            </div>
+                            <div class="feature-item">
+                                <div class="feature-icon">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path
+                                            d="M9.19,6.35C8.41,7.13 7.75,8.05 7.25,9H5V11H7.12C7.05,11.32 7,11.66 7,12C7,12.34 7.05,12.68 7.12,13H5V15H7.25C7.75,15.95 8.41,16.87 9.19,17.65L7.77,19.07L9.88,21.18L11.3,19.77C11.85,20.03 12.41,20.2 13,20.31V23H15V20.31C15.59,20.2 16.15,20.03 16.7,19.77L18.12,21.18L20.23,19.07L18.81,17.65C19.59,16.87 20.25,15.95 20.75,15H23V13H20.88C20.95,12.68 21,12.34 21,12C21,11.66 20.95,11.32 20.88,11H23V9H20.75C20.25,8.05 19.59,7.13 18.81,6.35L20.23,4.93L18.12,2.82L16.7,4.23C16.15,3.97 15.59,3.8 15,3.69V1H13V3.69C12.41,3.8 11.85,3.97 11.3,4.23L9.88,2.82L7.77,4.93L9.19,6.35M13,17A5,5 0 0,1 8,12A5,5 0 0,1 13,7A5,5 0 0,1 18,12A5,5 0 0,1 13,17Z" />
+                                    </svg>
+                                </div>
+                                <span class="feature-text">Avatar animations</span>
+                            </div>
+                        </div>
+                        <div class="uiverse-card__actions">
+                            <div class="uiverse-price">
+                                <span class="uiverse-price__currency">$</span>19.99
+                                <span class="uiverse-price__period">per month</span>
+                            </div>
+                            <button class="uiverse-card__button" onclick="openPricingModal('Ultra')">Upgrade to Ultra</button>
+                        </div>
+                    </div>
+                    <div class="uiverse-card__dots-pattern">
+                        <svg viewBox="0 0 80 40" aria-hidden="true">
+                            <circle fill="currentColor" r="3" cy="10" cx="10"></circle>
+                            <circle fill="currentColor" r="3" cy="10" cx="30"></circle>
+                            <circle fill="currentColor" r="3" cy="10" cx="50"></circle>
+                            <circle fill="currentColor" r="3" cy="10" cx="70"></circle>
+                            <circle fill="currentColor" r="3" cy="20" cx="20"></circle>
+                            <circle fill="currentColor" r="3" cy="20" cx="40"></circle>
+                            <circle fill="currentColor" r="3" cy="20" cx="60"></circle>
+                            <circle fill="currentColor" r="3" cy="30" cx="10"></circle>
+                            <circle fill="currentColor" r="3" cy="30" cx="30"></circle>
+                            <circle fill="currentColor" r="3" cy="30" cx="50"></circle>
+                            <circle fill="currentColor" r="3" cy="30" cx="70"></circle>
+                        </svg>
+                    </div>
+                    <div class="uiverse-card__accent-shape"></div>
+                    <div class="uiverse-card__corner-slice"></div>
+                    <div class="uiverse-card__stamp">
+                        <span class="uiverse-card__stamp-text">Premium</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -262,7 +462,7 @@
     <section class="portal-section" id="team" aria-labelledby="team-title">
         <div class="section-container">
             <span class="section-tag">Development Team</span>
-            <h2 class="section-title" id="team-title">Meet the Creators of Voice Ver Sign</h2>
+            <h2 class="section-title" id="team-title">Meet the Creators of VoiceVerSign</h2>
             <p class="section-desc">
                 Our multidisciplinary engineering team driving real-time AI sign translation, multimodal neural networks, and accessible interface design.
             </p>
@@ -317,7 +517,7 @@
             <span class="section-tag">Get In Touch</span>
             <h2 class="section-title" id="contact-title">Contact Us</h2>
             <p class="section-desc">
-                Questions about Voice Ver Sign, partnerships, or accessibility? Reach our team through any channel below.
+                Questions about VoiceVerSign, partnerships, or accessibility? Reach our team through any channel below.
             </p>
 
             <div class="contact-showcase">
@@ -328,7 +528,7 @@
                     </div>
                     <h3 class="contact-showcase__headline">Let's build accessible communication together</h3>
                     <p class="contact-showcase__text">
-                        Whether you're a developer integrating sign-language AI, an educator, or exploring Voice Ver Sign
+                        Whether you're a developer integrating sign-language AI, an educator, or exploring VoiceVerSign
                         for your organization — our team is here to help.
                     </p>
                 </div>
@@ -376,9 +576,9 @@
                     <a href="https://facebook.com/voice_ver_sign" class="contact-tile contact-tile--facebook"
                         target="_blank" rel="noopener noreferrer">
                         <span class="contact-tile__icon" aria-hidden="true">
-                            <svg fill="currentColor" viewBox="0 0 24 24">
-                                <path
-                                    d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                            <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" viewBox="0 0 24 24">
+                                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
                             </svg>
                         </span>
                         <span class="contact-tile__label">Facebook</span>
@@ -503,12 +703,40 @@
     <!-- ── SCRIPTS ── -->
     <script src="js/app.js"></script>
 
+    <!-- ── BACK TO TOP BUTTON ── -->
+    <button type="button" class="back-to-top" id="backToTopBtn" aria-label="Back to top" title="Back to top">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+        </svg>
+    </button>
+
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             if (!window.location.hash) {
                 history.replaceState(null, null, '#home');
             }
         });
+
+        // Back-to-top button: show after scrolling past one viewport, scroll to top on click.
+        (function () {
+            const btn = document.getElementById("backToTopBtn");
+            if (!btn) return;
+
+            const toggleVisibility = () => {
+                if (window.scrollY > window.innerHeight) {
+                    btn.classList.add("visible");
+                } else {
+                    btn.classList.remove("visible");
+                }
+            };
+
+            window.addEventListener("scroll", toggleVisibility, { passive: true });
+            toggleVisibility();
+
+            btn.addEventListener("click", () => {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+        })();
 
         // Pricing modal activation wrapper
         function openPricingModal(tierName) {
@@ -524,6 +752,28 @@
             document.getElementById("guestBlockModal")?.classList.add("hidden");
         }
     </script>
+
+    <!-- ── BOTTOM-LEFT THEME SWITCH ── -->
+    <label class="theme-switch theme-switch--floating theme-toggle-control" title="Toggle theme"
+        aria-label="Toggle dark or light theme">
+        <input type="checkbox" class="theme-switch__input" onchange="toggleTheme(event)">
+        <span class="theme-switch__track">
+            <span class="theme-switch__indicator"></span>
+            <span class="theme-switch__knob">
+                <svg class="theme-switch__icon theme-switch__icon--sun" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    aria-hidden="true">
+                    <circle cx="12" cy="12" r="4" />
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+                </svg>
+                <svg class="theme-switch__icon theme-switch__icon--moon" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    aria-hidden="true">
+                    <path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </span>
+        </span>
+    </label>
 </body>
 
 </html>
