@@ -171,14 +171,14 @@
                                 <span class="live-dot" id="svLiveDot" title="Live translation"></span>
                                 <span>Live camera</span>
                                 <span class="pipeline-hand-badge" id="signVoiceHandBadge">No hand in frame</span>
-                                <button type="button" class="pipeline-btn-secondary" onclick="pipelineToggleCamera()">Toggle camera</button>
+                                <button type="button" class="uiverse-btn" onclick="pipelineToggleCamera()">Toggle camera</button>
                             </div>
                             <div class="pipeline-video-wrap">
                                 <video id="signVoiceVideo" class="pipeline-video pipeline-video--large" playsinline muted autoplay></video>
                             </div>
                             <canvas id="signVoiceCanvas" class="pipeline-canvas-hidden" width="640" height="480"></canvas>
                             <div class="pipeline-actions">
-                                <button type="button" class="pipeline-btn-primary" onclick="pipelineSignVoiceSpeak()" id="btnSignSpeak">Speak again (TTS)</button>
+                                <button type="button" class="uiverse-btn" onclick="pipelineSignVoiceSpeak()" id="btnSignSpeak">Speak again (TTS)</button>
                             </div>
                             <div class="pipeline-settings-panel">
                                 <div class="pipeline-settings-panel__head">
@@ -259,8 +259,8 @@
                             <label class="pipeline-label" for="voiceSignText">Transcribed text</label>
                             <textarea id="voiceSignText" class="pipeline-textarea" rows="4" placeholder="Speak into the microphone... (Ensure browser mic is allowed)"></textarea>
                             <div class="pipeline-actions">
-                                <button type="button" class="pipeline-btn-primary" onclick="pipelineVoiceSignTranscribe()">Transcribe Voice</button>
-                                <button type="button" class="pipeline-btn-primary" onclick="pipelineVoiceSignRender()" id="btnVoiceRender">Generate Sign</button>
+                                <button type="button" class="uiverse-btn" onclick="pipelineVoiceSignTranscribe()">Transcribe Voice</button>
+                                <button type="button" class="uiverse-btn" onclick="pipelineVoiceSignRender()" id="btnVoiceRender">Generate Sign</button>
                             </div>
                             <p class="pipeline-api-note" id="voiceSignApiNote">API: <code>POST /api/pipeline/voice-to-sign/transcribe</code></p>
                         </div>
@@ -359,7 +359,7 @@
                             <option value="quality">High quality</option>
                         </select>
                     </label>
-                    <button class="btn-primary" onclick="savePreferencesSettings()" style="padding:8px 16px;">Save Preferences</button>
+                    <button class="uiverse-btn" onclick="savePreferencesSettings()" style="padding:8px 16px;">Save Preferences</button>
                 </div>
             </div>
 
@@ -377,7 +377,7 @@
                         <div id="settingsAvatarInitials" style="width:72px; height:72px; border-radius:50%; background:var(--text-tertiary); color:white; display:flex; align-items:center; justify-content:center; font-size:24px;">U</div>
                         <div>
                             <input type="file" id="avatarUpload" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)">
-                            <button class="btn-secondary" onclick="document.getElementById('avatarUpload').click()" style="padding:6px 12px; font-size:13px; font-weight:500;">Upload New Picture</button>
+                            <button class="uiverse-btn" onclick="document.getElementById('avatarUpload').click()" style="padding:6px 12px; font-size:13px; font-weight:500;">Upload New Picture</button>
                             <p style="font-size:12px; color:var(--text-secondary); margin-top:6px;">JPG, GIF or PNG. 1MB max.</p>
                         </div>
                     </div>
@@ -397,7 +397,7 @@
                         <input type="email" id="profEmail" class="pref-input" placeholder="elias@voice_ver_sign.com" style="width:100%; border:1px solid var(--border); border-radius:6px; padding:8px 12px; background:var(--bg-main); color:var(--text-primary);">
                     </label>
                     
-                    <button class="btn-primary" onclick="saveUserProfile()" style="padding:8px 16px;">Save Profile</button>
+                    <button class="uiverse-btn" onclick="saveUserProfile()" style="padding:8px 16px;">Save Profile</button>
                 </div>
                 
                 <div class="panel-card" style="padding:20px; border:1px solid var(--border); border-radius:12px; background:var(--bg-elevated);">
@@ -406,8 +406,8 @@
                         Server APIs and WebSockets are controlled via deployment configurations. Your token sessions will be stored locally.
                     </p>
                     <div class="settings-info-actions" style="display:flex; gap:12px;">
-                        <button type="button" class="btn-secondary" onclick="Toast.info('A password reset link has been sent!')" style="padding:6px 16px;">Reset Password</button>
-                        <button type="button" class="btn-secondary" style="color:var(--maxton-red); font-weight:600; padding:6px 16px;" onclick="signOutApp()">Sign Out</button>
+                        <button type="button" class="uiverse-btn" onclick="Toast.info('A password reset link has been sent!')" style="padding:6px 16px;">Reset Password</button>
+                        <button type="button" class="uiverse-btn" style="color:var(--maxton-red); font-weight:600; padding:6px 16px;" onclick="signOutApp()">Sign Out</button>
                     </div>
                 </div>
             </div>
@@ -466,7 +466,7 @@
                     <ul>
                         <li>File & Image uploads</li>
                     </ul>
-                    <button class="btn-primary mt-1rem" onclick="handleSubscribe('Pro')">Upgrade</button>
+                    <button class="uiverse-btn mt-1rem" onclick="handleSubscribe('Pro')">Upgrade</button>
                 </div>
                 <div class="tier">
                     <h3>Ultra</h3>
@@ -476,7 +476,7 @@
                         <li>Unlimited File Uploads</li>
                         <li>Advanced AI Relay</li>
                     </ul>
-                    <button class="btn-primary mt-1rem" onclick="handleSubscribe('Ultra')">Upgrade</button>
+                    <button class="uiverse-btn mt-1rem" onclick="handleSubscribe('Ultra')">Upgrade</button>
                 </div>
             </div>
         </div>
@@ -504,7 +504,7 @@
                     <input class="form-input" type="text" placeholder="123">
                 </div>
             </div>
-            <button class="btn-primary" style="width: 100%;" onclick="Toast.success('Payment processing logic stub.')">Confirm Payment</button>
+            <button class="uiverse-btn" style="width: 100%;" onclick="Toast.success('Payment processing logic stub.')">Confirm Payment</button>
         </div>
     </div>
 
@@ -517,9 +517,9 @@
             </h2>
             <p>You need to create an account to use premium features or send more messages.</p>
             <div class="pricing-tiers" style="margin-bottom: 0;">
-                <button class="pipeline-btn-secondary" style="flex:1" onclick="window.location.href='../login.html'">Log In</button>
+                <button class="uiverse-btn" style="flex:1" onclick="window.location.href='../login.html'">Log In</button>
                 <div style="width:16px;"></div>
-                <button class="pipeline-btn-primary" style="flex:1" onclick="window.location.href='../signup.html'">Sign Up</button>
+                <button class="uiverse-btn" style="flex:1" onclick="window.location.href='../signup.html'">Sign Up</button>
             </div>
         </div>
     </div>

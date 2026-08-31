@@ -103,7 +103,7 @@
             </div>
 
             <div class="maxton-top-actions">
-                <span class="maxton-top-hint" title="Theme switch is at the bottom-left of the page">🌗 bottom-left</span>
+                <span class="maxton-top-hint" title="Theme switch is at the bottom-left of the page"></span>
                 <div style="position:relative; display:inline-block;" id="langDropdownWrap">
                     <button class="maxton-icon-btn"
                         onclick="document.getElementById('langDropdown').classList.toggle('show')">
@@ -501,7 +501,7 @@
             <div class="maxton-card" style="width: 100%;">
                 <div class="maxton-card-header">
                     <h3 class="maxton-card-title">User Management</h3>
-                    <button class="pipeline-btn-primary" onclick="document.getElementById('addUserModal').style.display='flex'">+ Add User</button>
+                    <button class="uiverse-btn" onclick="document.getElementById('addUserModal').style.display='flex'">+ Add User</button>
                 </div>
                 <div style="overflow-x: auto; margin-top: 16px;">
                     <table style="width: 100%; border-collapse: collapse; text-align: left;">
@@ -553,7 +553,7 @@
                     <div>
                         <input type="file" id="adminAvatarUpload" accept="image/*" style="display:none;"
                             onchange="handleAdminAvatarUpload(event)">
-                        <button class="pipeline-btn-secondary"
+                        <button class="uiverse-btn"
                             onclick="document.getElementById('adminAvatarUpload').click()">Upload New Picture</button>
                         <p style="font-size:12px; color:var(--text-secondary); margin-top:8px;">JPG, GIF or PNG. 2MB
                             max.</p>
@@ -604,7 +604,7 @@
                             style="width:100%; border:1px solid var(--border); border-radius:6px; padding:10px 12px; background:var(--bg-hover); color:var(--text-secondary); font-family:inherit; cursor:not-allowed;">
                     </div>
                     <div style="display: flex; flex-direction: column; justify-content: flex-end;">
-                        <button class="pipeline-btn-secondary" style="width: 100%; padding: 10px 12px;"
+                        <button class="uiverse-btn" style="width: 100%; padding: 10px 12px;"
                             onclick="Toast.info('Password reset instructions sent to email.')">Change Password</button>
                     </div>
                 </div>
@@ -631,7 +631,7 @@
                 </div>
 
                 <div style="margin-top: 32px; display: flex; justify-content: flex-end;">
-                    <button class="pipeline-btn-primary" onclick="saveAdminProfile()">Save Changes</button>
+                    <button class="uiverse-btn" onclick="saveAdminProfile()">Save Changes</button>
                 </div>
             </div>
         </div>
@@ -665,8 +665,8 @@
                     </select>
                 </div>
                 <div style="display:flex; gap:10px; margin-top:16px;">
-                    <button type="button" class="pipeline-btn-secondary" style="flex:1; border: 1px solid var(--border); background: var(--bg-hover); color: var(--text-primary); border-radius: 6px; padding: 10px; cursor: pointer; font-weight: 600;" onclick="document.getElementById('addUserModal').style.display='none'">Cancel</button>
-                    <button type="submit" class="pipeline-btn-primary" style="flex:1; background: var(--accent); color: white; border: none; border-radius: 6px; padding: 10px; cursor: pointer; font-weight: 600;">Create User</button>
+                    <button type="button" class="uiverse-btn" style="flex:1; border: 1px solid var(--border); background: var(--bg-hover); color: var(--text-primary); border-radius: 6px; padding: 10px; cursor: pointer; font-weight: 600;" onclick="document.getElementById('addUserModal').style.display='none'">Cancel</button>
+                    <button type="submit" class="uiverse-btn" style="flex:1; background: var(--accent); color: white; border: none; border-radius: 6px; padding: 10px; cursor: pointer; font-weight: 600;">Create User</button>
                 </div>
             </form>
         </div>
