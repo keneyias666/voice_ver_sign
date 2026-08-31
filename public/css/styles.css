@@ -703,6 +703,99 @@ textarea {
     transform: translateY(0);
 }
 
+/* Uiverse Subscribe button (gharsh11032000) — applied globally except pricing cards.
+   Uses the existing site --accent (gold) so the new buttons stay on-brand. */
+.uiverse-btn {
+    --uiverse-accent: var(--accent, #e0b694);
+    --uiverse-fill: var(--uiverse-accent);
+    --uiverse-text: var(--uiverse-accent);
+    --uiverse-text-hover: #1a1a1a;
+    cursor: pointer;
+    position: relative;
+    padding: 12px 28px;
+    font-size: 14px;
+    color: var(--uiverse-text);
+    border: 2px solid var(--uiverse-accent);
+    border-radius: 34px;
+    background-color: transparent;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: color 0.3s cubic-bezier(0.23, 1, 0.320, 1),
+        box-shadow 0.3s cubic-bezier(0.23, 1, 0.320, 1),
+        transform 0.3s cubic-bezier(0.23, 1, 0.320, 1);
+    overflow: hidden;
+    line-height: 1.2;
+    text-align: center;
+    /* The ::before fill paints at z-index -1, so it sits BEHIND the
+       button's own background — and therefore behind the text and any
+       child elements. This is what keeps the label readable on hover. */
+    z-index: 0;
+    /* Stable layout — prevent parent flex from shrinking the button. */
+    flex-shrink: 0;
+    /* Inline by default so nav / hero / toolbar buttons size to their label. */
+    width: auto;
+    min-width: 0;
+}
+
+/* When a uiverse button lives inside a form (or a card that wants a
+   full-width primary action), stretch it to fill the container. */
+form .uiverse-btn,
+.auth-card .uiverse-btn,
+.dev-panel .uiverse-btn,
+.modal-content .uiverse-btn,
+.uiverse-btn--block {
+    width: 100%;
+}
+
+.uiverse-btn::before {
+    content: '';
+    position: absolute;
+    /* Fill the button, then scale from the center. Using the button's own
+       dimensions (100% 100%) means the hover fill covers wide / tall buttons
+       completely — no more half-covered hover. */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    transform: scaleX(0);
+    transform-origin: center;
+    /* z-index -1 keeps the fill behind the button's own background and text. */
+    z-index: -1;
+    background-color: var(--uiverse-fill);
+    transition: transform 0.6s cubic-bezier(0.23, 1, 0.320, 1);
+}
+
+.uiverse-btn:hover::before {
+    transform: scaleX(1);
+}
+
+.uiverse-btn > * {
+    /* Keep label / icon children above the fill layer. */
+    position: relative;
+    z-index: 1;
+}
+
+.uiverse-btn:hover {
+    color: var(--uiverse-text-hover);
+    box-shadow: 0 0px 20px rgba(224, 182, 148, 0.4);
+}
+
+.uiverse-btn:active {
+    transform: scale(0.98);
+}
+
+.uiverse-btn:disabled,
+.uiverse-btn.btn-loading {
+    opacity: 0.6;
+    pointer-events: none;
+    transform: none;
+}
+
 .btn-loading {
     color: transparent !important;
     pointer-events: none;
@@ -2907,7 +3000,7 @@ body.reduced-motion *:hover {
     position: fixed;
     left: 32px;
     bottom: 32px;
-    padding: 6px;
+    padding: 2px;
     border-radius: 999px;
     z-index: 40;
 }
@@ -2916,8 +3009,19 @@ body.reduced-motion *:hover {
     .theme-switch--floating {
         left: 20px;
         bottom: 20px;
-        padding: 4px;
+        padding: 1px;
     }
+}
+
+/* Admin dashboard fix: the sidebar's logout button sits at bottom-left
+   of the viewport, exactly where the floating theme switch would land.
+   Shrink the theme switch padding here and lift it above the logout
+   row so the two never overlap. */
+.maxton-sidebar ~ .theme-switch--floating,
+.admin-page .theme-switch--floating {
+    padding: 0;
+    left: 16px;
+    bottom: 96px;
 }
 
 /* Contact section */
